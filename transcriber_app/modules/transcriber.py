@@ -26,8 +26,9 @@ def ensure_wav(input_path: str) -> str:
 
 
 class Transcriber:
-    def __init__(self, model_name: str = "small"):
-        self.model = whisper.load_model(model_name)
+    def __init__(self):
+        self.model = whisper.load_model("base", device="cuda")
+        self.model = self.model.half()
 
     def transcribe(self, audio_path: str) -> str:
         wav_path = ensure_wav(audio_path)

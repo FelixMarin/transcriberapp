@@ -90,7 +90,7 @@ def main():
     idioma_salida = "español"
 
     receiver = AudioReceiver()
-    transcriber = Transcriber(model_name="small")
+    transcriber = Transcriber()
     gemini = GeminiClient(
         api_key=os.getenv("GEMINI_API_KEY"),
         model="gemini-2.5-flash-lite",

@@ -5,17 +5,12 @@ import re
 import uuid
 import subprocess
 import json
-import logging
+from modules.logging.logging_config import setup_logging
 from pathlib import Path
 import sys
 
-# Logging básico
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
-)
-logger = logging.getLogger("audio_downloader")
-
+# Logging
+logger = setup_logging("transcribeapp")
 
 def extract_video_id(url: str) -> str:
     """Extrae un ID del vídeo si es posible, si no genera un UUID."""

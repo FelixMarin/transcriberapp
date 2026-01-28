@@ -1,10 +1,17 @@
+from modules.logging.logging_config import setup_logging
+
+# Logging
+logger = setup_logging("transcribeapp")
+
 class PromptFactory:
     AVAILABLE_MODES = ["default", "tecnico", "refinamiento", "ejecutivo", "bullet"]
 
     def __init__(self, target_lang="es"):
+        logger.info(f"[PROMPT FACTORY] Inicializando con idioma objetivo: {target_lang}")
         self.lang = target_lang
 
     def get_prompt(self, mode: str, text: str) -> str:
+        logger.info(f"[PROMPT FACTORY] Generando prompt para modo: {mode}")
         mode = mode.lower()
 
         prompts = {

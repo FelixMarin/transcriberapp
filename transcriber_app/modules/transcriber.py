@@ -1,12 +1,13 @@
 import os
 import tempfile
 import subprocess
-import whisper
+from faster_whisper import WhisperModel
 
 # Detectar Jetson
 IS_JETSON = os.path.exists('/etc/nv_tegra_release')
 if IS_JETSON:
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 
 def ensure_wav(input_path: str) -> str:
     tmp_wav = tempfile.mktemp(suffix=".wav")
@@ -26,18 +27,26 @@ def ensure_wav(input_path: str) -> str:
 
 
 class Transcriber:
-    def __init__(self):
-        self.model = whisper.load_model("base", device="cuda")
+    def __init__(self, model_size="base"):
+        """
+        Carga el modelo faster-whisper optimizado para Jetson.
+        """
+        compute_type = "float16" if IS_JETSON else "int8"
+
+        self.model = WhisperModel(
+            model_size,
+            device="cuda" if IS_JETSON else "cpu",
+            compute_type=compute_type
+        )
 
     def transcribe(self, audio_path: str) -> str:
         wav_path = ensure_wav(audio_path)
 
-        result = self.model.transcribe(
+        segments, info = self.model.transcribe(
             wav_path,
-            language=None,          # auto-detección
-            task="transcribe",
-            verbose=False,
-            fp16=True if IS_JETSON else False
+            beam_size=5,
+            language=None  # auto-detección
         )
 
-        return result["text"].strip()
+        text = " ".join([seg.text for seg in segments]).strip()
+        return text

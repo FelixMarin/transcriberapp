@@ -1,5 +1,7 @@
 ![Imagen de muestra](https://raw.githubusercontent.com/FelixMarin/transcriberapp/refs/heads/feature/interfaz-web/screen.jpg)
 
+---
+
 TranscriberApp es una herramienta modular diseñada para:
 
 - **Transcribir audios mediante Whisper** con aceleración GPU en Jetson  

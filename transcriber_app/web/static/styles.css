@@ -1,41 +1,110 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 40px;
-    background: #f5f5f5;
+    font-family: 'Inter', sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+    margin: 0;
+    padding: 40px;    
 }
 
 h1 {
-    margin-bottom: 20px;
+    text-align: center;
+    margin-bottom: 30px;
+    color: #0077cc;
+    font-size: xxx-large;
 }
 
 section {
     background: white;
-    padding: 20px;
-    margin-bottom: 25px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+button {
+    background-color: #0077cc;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    margin: 5px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
+    background-color: #005fa3;
 }
 
 label {
     display: block;
     margin-top: 10px;
+    font-weight: bold;
 }
 
 input, select {
-    width: 100%;
+    width: 99%;
     padding: 8px;
-    margin-top: 5px;
+    margin-top: 4px;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
 
-button {
-    margin-top: 15px;
-    padding: 10px 20px;
-    cursor: pointer;
+#status {
+    font-style: italic;
+    margin-top: 10px;
+    color: #555;
 }
 
 #output {
-    background: #222;
-    color: #0f0;
-    padding: 15px;
-    border-radius: 5px;
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-radius: 6px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+audio {
+    margin-top: 10px;
+    width: 100%;
+}
+
+#result h2 {
+    margin-bottom: 10px;
+}
+
+.form-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.form-group {
+    flex: 1;
+    min-width: 180px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.form-group input,
+.form-group select {
+    width: 75%;
+    padding: 6px 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }

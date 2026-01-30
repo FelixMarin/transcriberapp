@@ -273,3 +273,37 @@ audio {
     padding: 12px;
     box-sizing: border-box;
 }
+
+/* Overlay que bloquea toda la interfaz */
+.overlay-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.45); /* oscurece la pantalla */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000; /* por encima de todo */
+    backdrop-filter: blur(2px);
+}
+
+.overlay-loading.hidden {
+    display: none;
+}
+
+/* Spinner */
+.loader {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #333;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

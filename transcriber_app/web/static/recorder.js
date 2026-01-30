@@ -22,6 +22,10 @@ document.getElementById("modo").onchange = validateForm;
 
 let chatHistory = [];
 
+document.getElementById("nombre").addEventListener("input", updateSendButtonState);
+document.getElementById("email").addEventListener("input", updateSendButtonState);
+document.getElementById("modo").addEventListener("change", updateSendButtonState);
+
 // -----------------------------
 // Protección contra cerrar/refrescar
 // -----------------------------
@@ -103,6 +107,7 @@ function startJobPolling(jobId) {
                             const markdown = await resMd.text();
                             document.getElementById("mdResult").innerHTML = marked.parse(markdown);
                             document.getElementById("result").style.display = "block";
+                            updateSendButtonState();
                         } else {
                             document.getElementById("mdResult").innerHTML =
                                 "<p>No se pudo cargar el Markdown generado.</p>";
@@ -121,6 +126,7 @@ function startJobPolling(jobId) {
                             const texto = await resTxt.text();
                             document.getElementById("transcripcionTexto").textContent = texto;
                             document.getElementById("transcripcion").style.display = "block";
+                            updateSendButtonState();
                         } else {
                             document.getElementById("transcripcionTexto").textContent =
                                 "No se pudo cargar la transcripción original.";
@@ -133,6 +139,7 @@ function startJobPolling(jobId) {
                     chatPanel.classList.remove("open");
                     chatHistory = [];
                     chatMessages.innerHTML = "";
+                    updateSendButtonState();
                 }
             }
         }
@@ -155,6 +162,7 @@ recordBtn.onclick = async () => {
 
     mediaRecorder.onstop = () => {
         lastRecordingBlob = new Blob(audioChunks, { type: "audio/mp3" });
+        updateSendButtonState();
 
         const url = URL.createObjectURL(lastRecordingBlob);
         preview.src = url;
@@ -223,16 +231,27 @@ sendBtn.onclick = async () => {
     output.textContent = "Enviando audio y lanzando procesamiento…";
     statusText.textContent = "Procesando audio…";
 
-    const res = await fetch("/api/upload-audio", {
-        method: "POST",
-        body: formData
-    });
+    // 🔥 Bloquear toda la interfaz
+    showOverlay();
 
-    const data = await res.json();
-    output.textContent = JSON.stringify(data, null, 2);
+    try {
+        const res = await fetch("/api/upload-audio", {
+            method: "POST",
+            body: formData
+        });
 
-    if (data.job_id) {
-        startJobPolling(data.job_id);
+        const data = await res.json();
+        output.textContent = JSON.stringify(data, null, 2);
+
+        if (data.job_id) {
+            startJobPolling(data.job_id);
+        }
+    } catch (err) {
+        console.error("Error al enviar audio:", err);
+        alert("Error al enviar el audio o iniciar el procesamiento.");
+    } finally {
+        // 🔥 Desbloquear la interfaz SIEMPRE
+        hideOverlay();
     }
 };
 
@@ -359,17 +378,57 @@ chatSend.onclick = async () => {
     addMessage(msg, "user");
     chatInput.value = "";
 
-    // Añadir al historial
     chatHistory.push({ role: "user", content: msg });
 
     const thinkingMsg = addMessage("Pensando…", "ai", true);
 
-    const respuesta = await enviarPreguntaAlModelo(msg);
+    showOverlay(); // 🔥 Bloquea la interfaz
 
-    // Reemplazar el "Pensando…" por la respuesta real
-    thinkingMsg.textContent = respuesta;
-
-    // Añadir respuesta al historial
-    chatHistory.push({ role: "assistant", content: respuesta });
+    try {
+        const respuesta = await enviarPreguntaAlModelo(msg);
+        thinkingMsg.textContent = respuesta;
+        chatHistory.push({ role: "assistant", content: respuesta });
+    } catch (e) {
+        thinkingMsg.textContent = "Error al procesar la respuesta.";
+    } finally {
+        hideOverlay(); // 🔥 Desbloquea la interfaz
+    }
 };
 
+// -----------------------------
+// Overlay + spinner
+// -----------------------------
+
+function showOverlay() {
+    document.getElementById("overlayLoading").classList.remove("hidden");
+}
+
+function hideOverlay() {
+    document.getElementById("overlayLoading").classList.add("hidden");
+}
+
+
+// -----------------------------
+// Botón Procesar activado/desactivado
+// -----------------------------
+function updateSendButtonState() {
+    const nombre = document.getElementById("nombre").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const modo = document.getElementById("modo").value.trim();
+
+    const transcripcion = document.getElementById("transcripcionTexto").textContent.trim();
+    const resultado = document.getElementById("mdResult").textContent.trim();
+
+    const hayAudio = !!lastRecordingBlob;
+
+    const puedeEnviar =
+        hayAudio &&
+        nombre.length > 0 &&
+        email.length > 0 &&
+        modo.length > 0 &&
+        transcripcion.length === 0 &&
+        resultado.length === 0;
+
+    sendBtn.disabled = !puedeEnviar;
+    sendBtn.classList.toggle("disabled", !puedeEnviar);
+}

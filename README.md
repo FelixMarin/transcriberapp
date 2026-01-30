@@ -1,6 +1,4 @@
-![Imagen de muestra](https://raw.githubusercontent.com/FelixMarin/transcriberapp/refs/heads/main/screen.jpg)
-
----
+# TranscriberApp
 
 TranscriberApp es una herramienta modular diseñada para:
 
@@ -11,6 +9,12 @@ TranscriberApp es una herramienta modular diseñada para:
 - **Crear resúmenes técnicos, ejecutivos o en bullet points**  
 - **Guardar resultados en formato Markdown**  
 - **Ejecutar nativamente en Jetson con CUDA real**  
+- **Interactuar con un asistente IA integrado**  
+- **Consultar y ampliar información mediante chat con streaming de tokens**  
+- **Imprimir el resultado procesado en PDF**  
+- **Interfaz moderna con overlay de carga y bloqueo de interacción**  
+
+![Imagen de muestra](https://raw.githubusercontent.com/FelixMarin/transcriberapp/refs/heads/main/screen.jpg)
 
 ---
 
@@ -25,6 +29,12 @@ TranscriberApp es una herramienta modular diseñada para:
 - **Compatibilidad total con NVIDIA Jetson**  
 - **Wheels personalizados para PyTorch CUDA en JetPack 6.x**  
 - **Ejecución nativa optimizada para JetPack R36.x**  
+- **Chat IA integrado con historial y contexto**  
+- **Streaming de tokens para respuestas en tiempo real**  
+- **Overlay de bloqueo con spinner durante el procesamiento**  
+- **Botón de impresión PDF en el panel de resultados**  
+- **Control inteligente del botón "Procesar y enviar"**  
+  - Solo se habilita cuando hay audio, nombre, email, modo y no existen resultados previos  
 
 ---
 
@@ -52,6 +62,13 @@ No se recomienda el uso de contenedores en esta versión de JetPack debido a inc
 - **Google Gemini API**  
 - **ONNX Runtime GPU**  
 
+### **Frontend:**
+- HTML/CSS/JS  
+- Chat IA con streaming  
+- Overlay de carga  
+- Botón de impresión PDF  
+- Renderizado Markdown con `marked.js`  
+
 ### **Infraestructura:**
 - **Ejecución nativa en Jetson**  
 - **Entorno virtual Python 3.10**  
@@ -78,6 +95,16 @@ TranscriberApp/
 │   ├── modules/
 │   ├── runner/
 │   └── web/
+│       ├── static/
+│       │   ├── js/
+│       │   │   ├── recorder.js
+│       │   │   ├── chat.js
+│       │   │   ├── streaming.js
+│       │   │   ├── overlay.js
+│       │   │   └── ui_validations.js
+│       │   ├── css/
+│       │   └── img/
+│       └── templates/
 │
 ├── requirements_clean.txt      
 ├── requirements.txt            
@@ -156,28 +183,61 @@ outputs/
 
 ---
 
+## 🧠 Funcionalidades avanzadas del frontend
+
+### ✔ Chat IA integrado
+- Conversación contextual basada en la transcripción y el resumen  
+- Historial persistente durante la sesión  
+- Respuestas en tiempo real mediante **streaming de tokens**  
+- Formato enriquecido con saltos de línea y listas  
+
+### ✔ Overlay de carga
+- Bloquea la interfaz durante el procesamiento  
+- Spinner centrado  
+- Evita interacciones erróneas  
+
+### ✔ Botón de impresión PDF
+- Disponible en el panel de **Resultado Procesado**  
+- Imprime únicamente el contenido del resumen  
+- Formato limpio y preparado para documentación  
+
+### ✔ Validación inteligente del botón "Procesar y enviar"
+El botón solo se habilita cuando:
+
+- Hay un audio grabado  
+- Nombre, email y modo están completos  
+- No existe transcripción previa  
+- No existe resultado procesado  
+
+---
+
 ## 🧠 Configuración avanzada
 
 Variables en `.env`:
 
 ```bash
 GEMINI_API_KEY=...
-MODEL_SIZE=base
-TARGET_LANG=es
-LOG_LEVEL=INFO
+SMTP_HOST=...
+SMTP_PORT=465
+SMTP_USER=...
+SMTP_PASS=...
+USE_MODEL=gemini-2.5-flash-lite
+LANGUAGE=es
 ```
 
-# 🌐 Acceso desde la red local (IMPORTANTE)
+---
+
+## 🌐 Acceso desde la red local (IMPORTANTE)
 
 Para acceder a la interfaz web de **TranscriberApp** desde cualquier PC, móvil o tablet dentro de la misma red local, es necesario usar **HTTPS**, ya que los navegadores bloquean el acceso al micrófono (`getUserMedia()`) en conexiones HTTP que no sean `localhost`.
 
-## ✔ Requisitos
+### ✔ Requisitos
 
 1. **Caddy** instalado como reverse proxy HTTPS  
 2. **Uvicorn** ejecutándose en el Jetson en `127.0.0.1:9000`  
-3. **Caddy** escuchando en el puerto **443** y redirigiendo a Uvicorn
+3. **Caddy** escuchando en el puerto **443** y redirigiendo a Uvicorn  
 
-## ✔ Configuración de Caddy
+### ✔ Configuración de Caddy
 
 Archivo: `/etc/caddy/Caddyfile`
 
@@ -201,7 +261,7 @@ Reiniciar Caddy:
 sudo systemctl restart caddy
 ```
 
-## ✔ Arranque de la aplicación
+### ✔ Arranque de la aplicación
 
 El servidor FastAPI debe ejecutarse **solo en local**, sin HTTPS:
 
@@ -211,7 +271,7 @@ uvicorn transcriber_app.web.web_app:app \
     --port 9000
 ```
 
-## ✔ Acceso desde otros dispositivos
+### ✔ Acceso desde otros dispositivos
 
 En cualquier navegador dentro de la red:
 
@@ -227,7 +287,7 @@ https://192.168.0.105
 
 ⚠ **No usar `:9000`**, ya que ese puerto no sirve HTTPS.
 
-## ✔ ¿Por qué es necesario?
+### ✔ ¿Por qué es necesario?
 
 Los navegadores solo permiten usar el micrófono si la página se sirve desde:
 
@@ -242,11 +302,9 @@ Por eso, para acceder desde otro PC o móvil, es obligatorio usar **HTTPS**.
 ## 🐛 Solución de problemas
 
 ### PyTorch sin CUDA
-
 Instalar wheels personalizados.
 
 ### Whisper lento
-
 Usar modelo más pequeño:
 
 ```bash
@@ -254,20 +312,17 @@ export MODEL_SIZE=tiny
 ```
 
 ### ONNX GPU no carga
-
 Verificar:
 
 ```bash
 python -c "import onnxruntime as ort; print(ort.get_device())"
 ```
 
-# 📌 Comandos útiles
-
-Este apartado reúne los comandos más importantes para trabajar con TranscriberApp en modo nativo sobre Jetson.
-
 ---
 
-## 🎧 Descargar audio desde YouTube
+## 📌 Comandos útiles
+
+### 🎧 Descargar audio desde YouTube
 
 ```bash
 python transcriber_app/modules/audio_downloader.py "URL_DEL_VIDEO"
@@ -279,92 +334,51 @@ Ejemplo:
 python transcriber_app/modules/audio_downloader.py "https://youtu.be/osKyvYJ3PRM?si=LM23Iu92g0oxG8ox"
 ```
 
-El archivo descargado se guarda en `audios/`.
-
----
-
-## 🧠 Ejecutar el pipeline completo
-
-### Formato general
+### 🧠 Ejecutar el pipeline completo
 
 ```bash
 python -m transcriber_app.main [audio|texto] [nombre] [modo]
 ```
 
-### Ejemplo (transcripción + resumen técnico)
+Ejemplo:
 
 ```bash
 python -m transcriber_app.main audio ejemplo1 tecnico
 ```
 
-Esto genera:
-
-- `transcripts/ejemplo1.txt`  
-- `outputs/ejemplo1_tecnico.md`
-
----
-
-## 🌐 Ejecutar la API web
+### 🌐 Ejecutar la API web
 
 ```bash
 uvicorn transcriber_app.web.web_app:app --host 0.0.0.0 --port 8000
 ```
 
-Acceso:
-
-```
-http://localhost:8000
-```
-
----
-
-## ▶️ Ejecutar la app con el script de arranque
+### ▶️ Ejecutar la app con el script de arranque
 
 ```bash
 ./start.sh
-```
-
-Asegúrate de haber dado permisos:
-
-```bash
 chmod +x start.sh
 ```
 
----
-
-## 🔥 Matar procesos Python que se quedan colgados
-
-Listar procesos:
+### 🔥 Matar procesos Python colgados
 
 ```bash
 ps aux | grep python
-```
-
-Matar uno:
-
-```bash
 kill -9 PID
 ```
 
----
-
-## 🧪 Ejecutar tests
+### 🧪 Ejecutar tests
 
 ```bash
 pytest -q
 ```
 
----
-
-## 🧹 Limpiar cachés de Python
+### 🧹 Limpiar cachés de Python
 
 ```bash
 find . -type d -name "__pycache__" -exec rm -r {} +
 ```
 
----
-
-## 🧩 Verificar CUDA y PyTorch en el host
+### 🧩 Verificar CUDA y PyTorch
 
 ```bash
 python -c "import torch; print(torch.cuda.is_available())"
@@ -394,8 +408,9 @@ python -c "import torch; print(torch.cuda.is_available())"
 
 - Exportación a Jira  
 - Dashboard web  
-- Streaming  
 - Diarización  
+- Exportación avanzada a PDF  
+- Modo conversación larga  
 
 ---
 
@@ -415,5 +430,3 @@ MIT
 ## ✨ Agradecimientos
 
 OpenAI, Google, NVIDIA, FastAPI, comunidad Jetson.
-
-

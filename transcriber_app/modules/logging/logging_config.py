@@ -6,6 +6,7 @@ from pathlib import Path
 LOG_DIR = Path(__file__).resolve().parent.parent.parent / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
+
 def setup_logging(name="transcribeapp", level=logging.DEBUG) -> logging.Logger:
     """
     Configura el logging global del proyecto.

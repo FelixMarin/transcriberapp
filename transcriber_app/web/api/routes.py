@@ -1,4 +1,4 @@
-#transcriber_app/web/api/routes.py
+# transcriber_app/web/api/routes.py
 from fastapi import APIRouter, UploadFile, File, Form, BackgroundTasks, HTTPException
 from fastapi.responses import StreamingResponse
 from .models import ChatRequest
@@ -14,6 +14,7 @@ from transcriber_app.modules.logging.logging_config import setup_logging
 logger = setup_logging("transcribeapp")
 
 router = APIRouter()
+
 
 @router.post("/upload-audio")
 async def upload_audio(
@@ -61,11 +62,13 @@ async def upload_audio(
         "message": "Audio recibido. Procesamiento iniciado."
     }
 
+
 @router.get("/status/{job_id}")
 def get_status(job_id: str):
     logger.info(f"[API ROUTE] Consultando estado del job: {job_id}")
     status = JOB_STATUS.get(job_id, "unknown")
     return {"job_id": job_id, "status": status}
+
 
 @router.post("/chat")
 async def chat_endpoint(payload: ChatRequest):
@@ -76,6 +79,7 @@ async def chat_endpoint(payload: ChatRequest):
         historial=[m.dict() for m in payload.historial],
     )
     return {"respuesta": respuesta}
+
 
 @router.post("/chat/stream")
 async def chat_stream(payload: ChatRequest):

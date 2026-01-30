@@ -1,7 +1,6 @@
 # TranscriberApp
 
-![Coverage](coverage.svg)
-
+[![CI](https://github.com/FelixMarin/transcriberapp/actions/workflows/ci.yml/badge.svg)](https://github.com/FelixMarin/transcriberapp/actions/workflows/ci.yml) [![Coverage](https://img.shields.io/badge/coverage-N%2FA-lightgrey.svg)](https://github.com/FelixMarin/transcriberapp)
 
 TranscriberApp es una herramienta modular diseñada para:
 

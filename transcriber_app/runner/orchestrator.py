@@ -5,13 +5,14 @@ from transcriber_app.modules.logging.logging_config import setup_logging
 # Logging
 logger = setup_logging("transcribeapp")
 
+
 class Orchestrator:
     def __init__(self, receiver, transcriber, summarizer, formatter):
         self.receiver = receiver
         self.transcriber = transcriber
         self.summarizer = summarizer
         self.formatter = formatter
-        logger.info(f"[ORCHESTRATOR] Orchestrator inicializado con componentes.")
+        logger.info("[ORCHESTRATOR] Orchestrator inicializado con componentes.")
 
     def run_audio(self, audio_path, mode="default"):
         logger.info(f"[ORCHESTRATOR] Ejecutando flujo de audio para: {audio_path} con modo: {mode}")
@@ -30,4 +31,3 @@ class Orchestrator:
 
         summary = self.summarizer.summarize(text, mode)
         return self.formatter.save_output(name, summary["output"], mode)
-

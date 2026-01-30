@@ -5,6 +5,7 @@ from transcriber_app.config import LANGUAGE
 # Logging
 logger = setup_logging("transcribeapp")
 
+
 class PromptFactory:
     AVAILABLE_MODES = ["default", "tecnico", "refinamiento", "ejecutivo", "bullet"]
 
@@ -139,5 +140,3 @@ Usa la transcripción original y el resumen procesado como contexto principal.
 
 === RESPUESTA EN {self.lang.upper()} ===
 """
-
-

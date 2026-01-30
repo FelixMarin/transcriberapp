@@ -7,6 +7,7 @@ from transcriber_app.web.api.emailer import send_email_with_attachment
 # Cargar .env desde la raíz del proyecto
 load_dotenv(dotenv_path="/home/jetson/Public/TranscriberApp/.env")
 
+
 def main():
     print("=== TEST EMAILER (USANDO MÓDULO REAL) ===")
 
@@ -40,6 +41,7 @@ def main():
         print("✅ Email enviado correctamente desde el módulo emailer.py")
     else:
         print("❌ Error enviando email desde el módulo emailer.py")
+
 
 if __name__ == "__main__":
     main()

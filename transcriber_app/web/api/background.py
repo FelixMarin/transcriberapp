@@ -12,6 +12,7 @@ logger = setup_logging("transcribeapp")
 # Diccionario opcional para consultar estado desde /status
 JOB_STATUS = {}
 
+
 def process_audio_job(job_id: str, nombre: str, modo: str, email: str):
     logger.info(f"[BACKGROUND JOB] Iniciando job {job_id}")
     logger.info(f"[BACKGROUND JOB] Parámetros recibidos: nombre={nombre!r}, modo={modo!r}, email={email!r}")

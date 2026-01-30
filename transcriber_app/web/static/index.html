@@ -54,12 +54,25 @@
         <button id="sendBtn" disabled>Procesar y enviar</button>
     </section>
 
-    <section id="result">
-        <h2>Resultado</h2>
-        <div id="mdResult" class="markdown-body"></div>
+    <section id="transcripcion" style="display:none;">
+        <h2 class="collapsible">
+            <span class="arrow">▶</span> Transcripción original
+        </h2>
+        <div class="content" style="display:none;">
+            <pre id="transcripcionTexto"></pre>
+        </div>
+    </section>
+
+    <section id="result" style="display:none;">
+        <h2 class="collapsible open">
+            <span class="arrow">▼</span> Resultado procesado
+        </h2>
+        <div class="content">
+            <div id="mdResult" class="markdown-body"></div>
+        </div>
         <pre id="output" style="display:none;"></pre>
     </section>
 
-    <script src="/static/recorder.js?v=3"></script>
+    <script src="/static/recorder.js?v=4"></script>
 </body>
 </html>

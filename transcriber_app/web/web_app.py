@@ -37,6 +37,13 @@ def create_app() -> FastAPI:
     # Servir archivos .md generados por el backend
     app.mount("/api/resultados", StaticFiles(directory=OUTPUTS_DIR), name="resultados")
 
+    # Ruta absoluta al directorio transcripts
+    TRANSCRIPTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "transcripts"))
+    print(">>> SERVING TRANSCRIPTS FROM:", TRANSCRIPTS_DIR)
+
+    # Servir archivos .txt de transcripciones
+    app.mount("/api/transcripciones", StaticFiles(directory=TRANSCRIPTS_DIR), name="transcripciones")
+
     # Ruta explícita para /
     @app.get("/")
     async def root():

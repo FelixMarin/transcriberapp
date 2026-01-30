@@ -72,21 +72,55 @@ function startJobPolling(jobId) {
                 if (md) {
                     document.getElementById("mdResult").innerHTML = marked.parse(md);
                 } else {
-                    // Intentar cargar el archivo estandarizado
-                    const nombre = document.getElementById("nombre").value.trim();
-                    const modo = document.getElementById("modo").value.toLowerCase();
-                    const archivo = `${nombre}_${modo}.md`;
+                    // Normalizar nombre y modo (sin tildes)
+                    const nombre = document.getElementById("nombre").value.trim()
+                        .toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "");
 
+                    const modo = document.getElementById("modo").value
+                        .toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "");
+
+                    // Archivos generados
+                    const archivoMd = `${nombre}_${modo}.md`;
+                    const archivoTxt = `${nombre}.txt`;
+
+                    // -----------------------------
+                    // Cargar MARKDOWN
+                    // -----------------------------
                     try {
-                        const resMd = await fetch(`/api/resultados/${archivo}`);
+                        const resMd = await fetch(`/api/resultados/${archivoMd}`);
                         if (resMd.ok) {
                             const markdown = await resMd.text();
                             document.getElementById("mdResult").innerHTML = marked.parse(markdown);
+                            document.getElementById("result").style.display = "block";
                         } else {
-                            document.getElementById("mdResult").innerHTML = "<p>No se pudo cargar el Markdown generado.</p>";
+                            document.getElementById("mdResult").innerHTML =
+                                "<p>No se pudo cargar el Markdown generado.</p>";
                         }
                     } catch (e) {
-                        document.getElementById("mdResult").innerHTML = "<p>Error al intentar cargar el Markdown.</p>";
+                        document.getElementById("mdResult").innerHTML =
+                            "<p>Error al intentar cargar el Markdown.</p>";
+                    }
+
+                    // -----------------------------
+                    // Cargar TRANSCRIPCIÓN ORIGINAL
+                    // -----------------------------
+                    try {
+                        const resTxt = await fetch(`/api/transcripciones/${archivoTxt}`);
+                        if (resTxt.ok) {
+                            const texto = await resTxt.text();
+                            document.getElementById("transcripcionTexto").textContent = texto;
+                            document.getElementById("transcripcion").style.display = "block";
+                        } else {
+                            document.getElementById("transcripcionTexto").textContent =
+                                "No se pudo cargar la transcripción original.";
+                        }
+                    } catch (e) {
+                        document.getElementById("transcripcionTexto").textContent =
+                            "Error al cargar la transcripción original.";
                     }
                 }
             }
@@ -247,3 +281,20 @@ fileInput.onchange = async (event) => {
 
     statusText.textContent = `Grabación cargada: ${file.name}`;
 };
+
+document.querySelectorAll(".collapsible").forEach(header => {
+    header.addEventListener("click", () => {
+        const content = header.nextElementSibling;
+        const isOpen = header.classList.contains("open");
+
+        if (isOpen) {
+            content.style.display = "none";
+            header.classList.remove("open");
+            header.querySelector(".arrow").textContent = "▶";
+        } else {
+            content.style.display = "block";
+            header.classList.add("open");
+            header.querySelector(".arrow").textContent = "▼";
+        }
+    });
+});

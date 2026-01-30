@@ -1,4 +1,3 @@
-import os
 import subprocess
 import pytest
 from transcriber_app.modules.email_sender import EmailSender
@@ -17,7 +16,10 @@ def test_email_send_file_success(tmp_path, monkeypatch):
 
     def fake_run(cmd, input=None, check=False):
         calls.append((cmd, input))
-        class R: pass
+
+        class R:
+            pass
+
         return R()
 
     monkeypatch.setattr(subprocess, "run", fake_run)

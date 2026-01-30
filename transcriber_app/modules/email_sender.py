@@ -8,10 +8,11 @@ from transcriber_app.modules.logging.logging_config import setup_logging
 # Logging
 logger = setup_logging("transcribeapp")
 
+
 class EmailSender:
     def send_file(self, file_path: str, subject: str = "Transcripción generada"):
-        logger.info(f"[EMAIL SENDER] Enviando archivo: {file_path} a {', '.join(RECIPIENTS)}")
         """Envía el contenido del archivo usando el comando 'mail' del sistema."""
+        logger.info(f"[EMAIL SENDER] Enviando archivo: {file_path} a {', '.join(RECIPIENTS)}")
 
         path = Path(file_path)
         if not path.exists():

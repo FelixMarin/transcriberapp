@@ -5,6 +5,7 @@ from transcriber_app.modules.logging.logging_config import setup_logging
 # Logging
 logger = setup_logging("transcribeapp")
 
+
 class OutputFormatter:
     def save_output(self, base_name: str, content: str, mode: str) -> str:
         logger.info(f"[OUTPUT FORMATTER] Guardando salida para: {base_name} con modo: {mode}")

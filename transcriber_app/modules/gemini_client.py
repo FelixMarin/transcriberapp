@@ -16,19 +16,6 @@ genai.configure(api_key=GEMINI_API_KEY)
 # -----------------------------
 # CHAT CONTEXTUAL
 # -----------------------------
-async def chat_about_transcript(transcripcion: str, resumen: str, pregunta: str) -> str:
-    """
-    Genera una respuesta contextual usando transcripción + resumen + pregunta.
-    Usa PromptFactory para mantener consistencia y soporte multilenguaje.
-    """
-    factory = PromptFactory(target_lang=LANGUAGE)
-    prompt = factory.get_chat_prompt(transcripcion, resumen, pregunta)
-
-    model = genai.GenerativeModel(USE_MODEL)
-    response = model.generate_content(prompt)
-
-    return response.text
-
 async def stream_chat_about_transcript(transcripcion, resumen, pregunta, historial):
     factory = PromptFactory(target_lang=LANGUAGE)
     prompt = factory.get_chat_prompt(transcripcion, resumen, pregunta, historial)
@@ -40,6 +27,7 @@ async def stream_chat_about_transcript(transcripcion, resumen, pregunta, histori
     for chunk in response:
         if chunk.text:
             yield chunk.text
+
 
 async def chat_about_transcript(
     transcripcion: str,
@@ -54,6 +42,7 @@ async def chat_about_transcript(
     response = model.generate_content(prompt)
 
     return response.text
+
 
 # -----------------------------
 # CLIENTE PRINCIPAL PARA RESÚMENES

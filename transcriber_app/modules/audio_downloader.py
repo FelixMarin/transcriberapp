@@ -12,6 +12,7 @@ import sys
 # Logging
 logger = setup_logging("transcribeapp")
 
+
 def extract_video_id(url: str) -> str:
     """Extrae un ID del vídeo si es posible, si no genera un UUID."""
     patterns = [
@@ -86,7 +87,7 @@ def download_audio(url: str, output_dir: str = "./audios", max_duration: int = 9
     if duration is None:
         try:
             duration = get_audio_duration(final_path)
-            logger.info(f"[AUDIO] Duración detectada (ffprobe): {duration/60:.1f} min")
+            logger.info(f"[AUDIO] Duración: {duration/60:.1f} min")
 
             if duration > max_duration:
                 os.remove(final_path)

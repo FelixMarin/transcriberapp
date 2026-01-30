@@ -1,9 +1,5 @@
 import os
-import json
-import subprocess
-from types import SimpleNamespace
 import pytest
-import builtins
 
 from transcriber_app.modules import audio_downloader as ad
 
@@ -67,7 +63,11 @@ def test_download_audio_no_duration_then_probe_too_long(monkeypatch, tmp_path):
     monkeypatch.setattr(ad, "extract_video_id", lambda url: "testid")
 
     # Make FakeYDL create file and pass opts so it knows where to create file
-    monkeypatch.setattr(ad.yt_dlp, "YoutubeDL", lambda opts=None: FakeYDL(info={}, create_file=True, opts=opts))
+
+    def _make_ydl(opts=None):
+        return FakeYDL(info={}, create_file=True, opts=opts)
+
+    monkeypatch.setattr(ad.yt_dlp, "YoutubeDL", _make_ydl)
 
     # Ensure get_audio_duration returns something large
     monkeypatch.setattr(ad, "get_audio_duration", lambda path: 100000)
@@ -85,7 +85,11 @@ def test_download_audio_no_duration_then_probe_too_long(monkeypatch, tmp_path):
 def test_download_audio_success(monkeypatch, tmp_path):
     monkeypatch.setattr(ad, "extract_video_id", lambda url: "testid")
     # create file on download and pass opts so FakeYDL creates file at the outtmpl
-    monkeypatch.setattr(ad.yt_dlp, "YoutubeDL", lambda opts=None: FakeYDL(info={"duration": 10}, create_file=True, opts=opts))
+
+    def _make_ydl_success(opts=None):
+        return FakeYDL(info={"duration": 10}, create_file=True, opts=opts)
+
+    monkeypatch.setattr(ad.yt_dlp, "YoutubeDL", _make_ydl_success)
 
     outdir = tmp_path / "audios"
     os.makedirs(outdir, exist_ok=True)

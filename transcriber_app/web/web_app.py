@@ -9,6 +9,7 @@ from .api.routes import router as api_router
 
 print(">>> CARGANDO WEB_APP.PY REAL <<<")
 
+
 def create_app() -> FastAPI:
     app = FastAPI(title="TranscriberApp Web")
 
@@ -30,7 +31,7 @@ def create_app() -> FastAPI:
 
     # Servir archivos estáticos en /static
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-    
+
     # Ruta absoluta al directorio outputs
     OUTPUTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "outputs"))
     print(">>> SERVING OUTPUTS FROM:", OUTPUTS_DIR)

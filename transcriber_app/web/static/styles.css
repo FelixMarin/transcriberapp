@@ -141,3 +141,191 @@ audio {
     border-radius: 6px;
     overflow-x: auto;
 }
+
+.collapsible {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.collapsible .arrow {
+    transition: transform 0.2s ease;
+}
+
+.collapsible.open .arrow {
+    transform: rotate(90deg);
+}
+
+.content {
+    margin-top: 8px;
+    padding-left: 16px;
+}
+
+/* Botón hamburguesa */
+.chat-toggle {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    background: #333;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 20px;
+    z-index: 1000;
+}
+
+/* Panel lateral */
+.chat-panel {
+    position: fixed;
+    top: 0;
+    right: -350px; /* Oculto inicialmente */
+    width: 350px;
+    height: 100%;
+    background: #fafafa;
+    border-left: 2px solid #ddd;
+    box-shadow: -2px 0 6px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    transition: right 0.3s ease;
+    z-index: 999;
+}
+
+/* Panel visible */
+.chat-panel.open {
+    right: 0;
+}
+
+/* Cabecera */
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #eee;
+    border-bottom: 1px solid #ddd;
+}
+
+.chat-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+/* Mensajes */
+.chat-messages {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    font-size: 14px;
+}
+
+/* Entrada */
+.chat-input-container {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+}
+
+#chatInput {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#chatSend {
+    margin-left: 8px;
+    padding: 8px 12px;
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.msg-user {
+    background: #d1e7ff;
+    padding: 8px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+}
+
+.msg-ai {
+    background: #e8e8e8;
+    padding: 8px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+}
+
+.chat-toggle.hidden {
+    display: none;
+}
+
+#transcripcionTexto {
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
+    padding: 12px;
+    box-sizing: border-box;
+}
+
+/* Overlay que bloquea toda la interfaz */
+.overlay-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.45); /* oscurece la pantalla */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000; /* por encima de todo */
+    backdrop-filter: blur(2px);
+}
+
+.overlay-loading.hidden {
+    display: none;
+}
+
+/* Spinner */
+.loader {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #333;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.resultado-procesado {
+    position: relative;
+}
+
+.btn-imprimir {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    z-index: 10;
+}
+
+.btn-imprimir:hover {
+    background-color: #0056b3;
+}

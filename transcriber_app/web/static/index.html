@@ -54,12 +54,48 @@
         <button id="sendBtn" disabled>Procesar y enviar</button>
     </section>
 
-    <section id="result">
-        <h2>Resultado</h2>
-        <div id="mdResult" class="markdown-body"></div>
+    <section id="transcripcion" style="display:none;">
+        <h2 class="collapsible">
+            <span class="arrow">▶</span> Transcripción original
+        </h2>
+        <div class="content" style="display:none;">
+            <pre id="transcripcionTexto"></pre>
+        </div>
+    </section>
+
+    <section id="result" style="display:none;">
+        <h2 class="collapsible open">
+            <span class="arrow">▼</span> Resultado procesado
+        </h2>
+        <div class="content">
+            <button id="btnImprimirPDF" class="btn-imprimir">🖨️ Imprimir PDF</button>
+            <div id="mdResult" class="markdown-body"></div>
+        </div>
         <pre id="output" style="display:none;"></pre>
     </section>
 
-    <script src="/static/recorder.js?v=3"></script>
+    <!-- Botón hamburguesa -->
+    <div id="chatToggle" class="chat-toggle">☰</div>
+
+    <!-- Panel lateral del chat -->
+    <div id="chatPanel" class="chat-panel">
+        <div class="chat-header">
+            <h3>Asistente IA</h3>
+            <button id="chatClose" class="chat-close">×</button>
+        </div>
+
+        <div id="chatMessages" class="chat-messages"></div>
+
+        <div class="chat-input-container">
+            <input id="chatInput" type="text" placeholder="Preguntar sobre la transcripción…" />
+            <button id="chatSend">Enviar</button>
+        </div>
+    </div>
+
+    <div id="overlayLoading" class="overlay-loading hidden">
+        <div class="loader"></div>
+    </div>
+
+    <script src="/static/recorder.js?v=10"></script>
 </body>
 </html>

@@ -1,4 +1,6 @@
+# transcriber_app/modules/prompt_factory.py
 from transcriber_app.modules.logging.logging_config import setup_logging
+from transcriber_app.config import LANGUAGE
 
 # Logging
 logger = setup_logging("transcribeapp")
@@ -6,7 +8,7 @@ logger = setup_logging("transcribeapp")
 class PromptFactory:
     AVAILABLE_MODES = ["default", "tecnico", "refinamiento", "ejecutivo", "bullet"]
 
-    def __init__(self, target_lang="es"):
+    def __init__(self, target_lang=LANGUAGE):
         logger.info(f"[PROMPT FACTORY] Inicializando con idioma objetivo: {target_lang}")
         self.lang = target_lang
 
@@ -100,3 +102,42 @@ Resume el siguiente texto en {self.lang} de forma clara y concisa:
 
         # Si el modo no existe, usar "default"
         return prompts.get(mode, prompts["default"])
+
+    def get_chat_prompt(
+        self,
+        transcripcion: str,
+        resumen: str,
+        pregunta: str,
+        historial: list[dict] | None = None,
+    ) -> str:
+        historial = historial or []
+
+        historial_texto = ""
+        if historial:
+            partes = []
+            for h in historial:
+                rol = "USUARIO" if h["role"] == "user" else "ASISTENTE"
+                partes.append(f"{rol}: {h['content']}")
+            historial_texto = "\n".join(partes)
+
+        return f"""
+Eres un asistente experto. Responde SIEMPRE en {self.lang}.
+Usa la transcripción original y el resumen procesado como contexto principal.
+
+=== CONTEXTO DE LA REUNIÓN ===
+[TRANSCRIPCIÓN]
+{transcripcion}
+
+[RESUMEN]
+{resumen}
+
+=== HISTORIAL DE LA CONVERSACIÓN ===
+{historial_texto if historial_texto else "Sin mensajes previos."}
+
+=== PREGUNTA ACTUAL DEL USUARIO ===
+{pregunta}
+
+=== RESPUESTA EN {self.lang.upper()} ===
+"""
+
+

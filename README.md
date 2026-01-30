@@ -390,6 +390,9 @@ python -c "import torch; print(torch.cuda.is_available())"
 
 ---
 
+![Imagen de muestra](https://raw.githubusercontent.com/FelixMarin/transcriberapp/refs/heads/feature/interfaz-web/screen.jpg)
+---
+
 ## 📈 Roadmap
 
 - Exportación a Jira  
@@ -415,3 +418,5 @@ MIT
 ## ✨ Agradecimientos
 
 OpenAI, Google, NVIDIA, FastAPI, comunidad Jetson.
+
+

@@ -10,10 +10,21 @@ const downloadBtn = document.getElementById("downloadBtn");
 const statusText = document.getElementById("status");
 const preview = document.getElementById("preview");
 const output = document.getElementById("output");
+const uploadBtn = document.getElementById("uploadBtn");
+const fileInput = document.getElementById("fileInput");
+const chatToggle = document.getElementById("chatToggle");
+const chatPanel = document.getElementById("chatPanel");
+const chatClose = document.getElementById("chatClose");
 
 document.getElementById("nombre").oninput = validateForm;
 document.getElementById("email").oninput = validateForm;
 document.getElementById("modo").onchange = validateForm;
+
+let chatHistory = [];
+
+document.getElementById("nombre").addEventListener("input", updateSendButtonState);
+document.getElementById("email").addEventListener("input", updateSendButtonState);
+document.getElementById("modo").addEventListener("change", updateSendButtonState);
 
 // -----------------------------
 // Protección contra cerrar/refrescar
@@ -63,6 +74,7 @@ function startJobPolling(jobId) {
         if (data.status === "processing" || data.status === "running") {
             setTimeout(checkStatus, 3000);
         } else {
+            hideOverlay();
             // Si el backend devuelve el markdown en data.markdown o data.resultado
             if (data.markdown || data.resultado || data.md) {
                 const md = data.markdown || data.resultado || data.md;
@@ -72,22 +84,63 @@ function startJobPolling(jobId) {
                 if (md) {
                     document.getElementById("mdResult").innerHTML = marked.parse(md);
                 } else {
-                    // Intentar cargar el archivo estandarizado
-                    const nombre = document.getElementById("nombre").value.trim();
-                    const modo = document.getElementById("modo").value.toLowerCase();
-                    const archivo = `${nombre}_${modo}.md`;
+                    // Normalizar nombre y modo (sin tildes)
+                    const nombre = document.getElementById("nombre").value.trim()
+                        .toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "");
 
+                    const modo = document.getElementById("modo").value
+                        .toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "");
+
+                    // Archivos generados
+                    const archivoMd = `${nombre}_${modo}.md`;
+                    const archivoTxt = `${nombre}.txt`;
+
+                    // -----------------------------
+                    // Cargar MARKDOWN
+                    // -----------------------------
                     try {
-                        const resMd = await fetch(`/api/resultados/${archivo}`);
+                        const resMd = await fetch(`/api/resultados/${archivoMd}`);
                         if (resMd.ok) {
                             const markdown = await resMd.text();
                             document.getElementById("mdResult").innerHTML = marked.parse(markdown);
+                            document.getElementById("result").style.display = "block";
+                            updateSendButtonState();
                         } else {
-                            document.getElementById("mdResult").innerHTML = "<p>No se pudo cargar el Markdown generado.</p>";
+                            document.getElementById("mdResult").innerHTML =
+                                "<p>No se pudo cargar el Markdown generado.</p>";
                         }
                     } catch (e) {
-                        document.getElementById("mdResult").innerHTML = "<p>Error al intentar cargar el Markdown.</p>";
+                        document.getElementById("mdResult").innerHTML =
+                            "<p>Error al intentar cargar el Markdown.</p>";
                     }
+
+                    // -----------------------------
+                    // Cargar TRANSCRIPCIÓN ORIGINAL
+                    // -----------------------------
+                    try {
+                        const resTxt = await fetch(`/api/transcripciones/${archivoTxt}`);
+                        if (resTxt.ok) {
+                            const texto = await resTxt.text();
+                            document.getElementById("transcripcionTexto").textContent = texto;
+                            document.getElementById("transcripcion").style.display = "block";
+                            updateSendButtonState();
+                        } else {
+                            document.getElementById("transcripcionTexto").textContent =
+                                "No se pudo cargar la transcripción original.";
+                        }
+                    } catch (e) {
+                        document.getElementById("transcripcionTexto").textContent =
+                            "Error al cargar la transcripción original.";
+                    }
+                    // Reset del historial del chat al cargar una nueva transcripción
+                    chatPanel.classList.remove("open");
+                    chatHistory = [];
+                    chatMessages.innerHTML = "";
+                    updateSendButtonState();
                 }
             }
         }
@@ -110,6 +163,7 @@ recordBtn.onclick = async () => {
 
     mediaRecorder.onstop = () => {
         lastRecordingBlob = new Blob(audioChunks, { type: "audio/mp3" });
+        updateSendButtonState();
 
         const url = URL.createObjectURL(lastRecordingBlob);
         preview.src = url;
@@ -178,16 +232,27 @@ sendBtn.onclick = async () => {
     output.textContent = "Enviando audio y lanzando procesamiento…";
     statusText.textContent = "Procesando audio…";
 
-    const res = await fetch("/api/upload-audio", {
-        method: "POST",
-        body: formData
-    });
+    // 🔥 Bloquear toda la interfaz
+    showOverlay();
 
-    const data = await res.json();
-    output.textContent = JSON.stringify(data, null, 2);
+    try {
+        const res = await fetch("/api/upload-audio", {
+            method: "POST",
+            body: formData
+        });
 
-    if (data.job_id) {
-        startJobPolling(data.job_id);
+        const data = await res.json();
+        output.textContent = JSON.stringify(data, null, 2);
+
+        if (data.job_id) {
+            startJobPolling(data.job_id);
+        }
+    } catch (err) {
+        console.error("Error al enviar audio:", err);
+        alert("Error al enviar el audio o iniciar el procesamiento.");
+    } finally {
+        // ❌ NO ocultar aquí
+        // hideOverlay();
     }
 };
 
@@ -220,9 +285,6 @@ deleteBtn.onclick = () => {
     validateForm();
 };
 
-const uploadBtn = document.getElementById("uploadBtn");
-const fileInput = document.getElementById("fileInput");
-
 // -----------------------------
 // Cargar grabación desde archivo
 // -----------------------------
@@ -246,4 +308,211 @@ fileInput.onchange = async (event) => {
     downloadBtn.disabled = false;
 
     statusText.textContent = `Grabación cargada: ${file.name}`;
+};
+
+document.querySelectorAll(".collapsible").forEach(header => {
+    header.addEventListener("click", () => {
+        const content = header.nextElementSibling;
+        const isOpen = header.classList.contains("open");
+
+        if (isOpen) {
+            content.style.display = "none";
+            header.classList.remove("open");
+            header.querySelector(".arrow").textContent = "▶";
+        } else {
+            content.style.display = "block";
+            header.classList.add("open");
+            header.querySelector(".arrow").textContent = "▼";
+        }
+    });
+});
+
+// -----------------------------
+// Panel lateral del chat
+// -----------------------------
+chatToggle.onclick = () => {
+    chatPanel.classList.add("open");
+    chatToggle.classList.add("hidden");
+};
+
+chatClose.onclick = () => {
+    chatPanel.classList.remove("open");
+    chatToggle.classList.remove("hidden");
+};
+
+const chatMessages = document.getElementById("chatMessages");
+const chatInput = document.getElementById("chatInput");
+const chatSend = document.getElementById("chatSend");
+
+function addMessage(text, sender = "user", returnNode = false) {
+    const div = document.createElement("div");
+    div.className = sender === "user" ? "msg-user" : "msg-ai";
+    div.innerHTML = formatAsHTML(text);
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return returnNode ? div : null;
+}
+
+async function enviarPreguntaAlModelo(pregunta) {
+    const transcripcion = document.getElementById("transcripcionTexto").textContent;
+    const resumen = document.getElementById("mdResult").textContent;
+
+    const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            transcripcion,
+            resumen,
+            pregunta,
+            historial: chatHistory
+        })
+    });
+
+    const data = await res.json();
+    return data.respuesta;
+}
+
+chatSend.onclick = async () => {
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+
+    addMessage(msg, "user");
+    chatInput.value = "";
+
+    chatHistory.push({ role: "user", content: msg });
+
+    const aiMsg = addMessage("", "ai", true);
+
+    showOverlay();
+
+    try {
+        let textoFinal = "";
+
+        for await (const parcial of enviarPreguntaStreaming(msg)) {
+            hideOverlay();
+            aiMsg.innerHTML = formatAsHTML(parcial);
+            textoFinal = parcial;
+        }
+
+        chatHistory.push({ role: "assistant", content: textoFinal });
+
+    } catch (e) {
+        aiMsg.innerHTML = formatAsHTML("Error al procesar la respuesta.");
+    } finally {
+        hideOverlay();
+    }
+};
+
+// -----------------------------
+// Overlay + spinner
+// -----------------------------
+
+function showOverlay() {
+    document.getElementById("overlayLoading").classList.remove("hidden");
+}
+
+function hideOverlay() {
+    document.getElementById("overlayLoading").classList.add("hidden");
+}
+
+
+// -----------------------------
+// Botón Procesar activado/desactivado
+// -----------------------------
+function updateSendButtonState() {
+    const nombre = document.getElementById("nombre").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const modo = document.getElementById("modo").value.trim();
+
+    const transcripcion = document.getElementById("transcripcionTexto").textContent.trim();
+    const resultado = document.getElementById("mdResult").textContent.trim();
+
+    const hayAudio = !!lastRecordingBlob;
+
+    const puedeEnviar =
+        hayAudio &&
+        nombre.length > 0 &&
+        email.length > 0 &&
+        modo.length > 0 &&
+        transcripcion.length === 0 &&
+        resultado.length === 0;
+
+    sendBtn.disabled = !puedeEnviar;
+    sendBtn.classList.toggle("disabled", !puedeEnviar);
+}
+
+// -----------------------------
+// Streaming de la respuesta del modelo
+// -----------------------------
+async function* enviarPreguntaStreaming(pregunta) {
+    const transcripcion = document.getElementById("transcripcionTexto").textContent;
+    const resumen = document.getElementById("mdResult").textContent;
+
+    const res = await fetch("/api/chat/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            transcripcion,
+            resumen,
+            pregunta,
+            historial: chatHistory
+        })
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let texto = "";
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        texto += decoder.decode(value, { stream: true });
+        yield texto; // ahora sí funciona
+    }
+}
+
+// -----------------------------
+// Formatear texto como HTML
+// -----------------------------
+function formatAsHTML(text) {
+    // Escapar HTML básico
+    const escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    // Convertir saltos de línea en <br>
+    const withBreaks = escaped.replace(/\n/g, "<br>");
+
+    // Convertir listas numeradas y con viñetas en <ul>/<ol>
+    const formatted = withBreaks
+        .replace(/•\s/g, "•&nbsp;") // viñetas
+        .replace(/^\d+\.\s/gm, match => `<strong>${match}</strong>`); // numeradas
+
+    return formatted;
+}
+
+// -----------------------------
+// Imprimir PDF
+// -----------------------------
+document.getElementById("btnImprimirPDF").onclick = () => {
+    const contenido = document.getElementById("mdResult").innerHTML;
+
+    const ventana = window.open("", "_blank");
+    ventana.document.write(`
+        <html>
+            <head>
+                <title>Resumen Técnico</title>
+                <style>
+                    body { font-family: sans-serif; padding: 20px; }
+                    h1, h2, h3 { color: #333; }
+                    p, li { line-height: 1.6; }
+                </style>
+            </head>
+            <body>${contenido}</body>
+        </html>
+    `);
+    ventana.document.close();
+    ventana.print();
 };

@@ -1,5 +1,8 @@
 # TranscriberApp
 
+![Coverage](coverage.svg)
+
+
 TranscriberApp es una herramienta modular diseñada para:
 
 - **Transcribir audios mediante Whisper** con aceleración GPU en Jetson  

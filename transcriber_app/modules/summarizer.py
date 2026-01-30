@@ -1,3 +1,4 @@
+# transcriber_app/modules/summarizer.py
 from transcriber_app.modules.logging.logging_config import setup_logging
 
 # Logging

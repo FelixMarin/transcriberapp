@@ -1,3 +1,4 @@
+# transcriber_app/modules/output_formatter.py
 import os
 from transcriber_app.modules.logging.logging_config import setup_logging
 

@@ -45,6 +45,11 @@ google-auth==2.48.0
 google-auth-httplib2==0.3.0
 google-auth-oauthlib==1.2.1
 
+yt-dlp==2026.1.29
+
+# Development tools
+flake8
+
 # Local wheels
 # ./wheels/openai_whisper-20250625-py3-none-any.whl
 # ./wheels/onnxruntime_gpu-1.19.0-cp310-cp310-linux_aarch64.whl

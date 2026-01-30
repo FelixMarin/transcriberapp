@@ -1,9 +1,10 @@
-from summarizer import Summarizer
-from gemini_client import GeminiClient
-import os
+from transcriber_app.modules.summarizer import Summarizer
 
-client = GeminiClient(api_key=os.getenv("GEMINI_API_KEY"))
-summarizer = Summarizer(client)
+class FakeGeminiClient:
+    def analyze(self, text, mode="default"):
+        return {"output": "resumen simulado"}
+
+summarizer = Summarizer(FakeGeminiClient())
 
 result = summarizer.summarize("Texto de prueba.")
 print(result["output"])

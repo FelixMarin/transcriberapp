@@ -46,8 +46,8 @@ google-auth-httplib2==0.3.0
 google-auth-oauthlib==1.2.1
 
 # Local wheels
-./wheels/openai_whisper-20250625-py3-none-any.whl
-./wheels/onnxruntime_gpu-1.19.0-cp310-cp310-linux_aarch64.whl
-./wheels/torch_cuda_jetpack-2.3.0-py3-none-any.whl
-./wheels/torchaudio-2.3.0+952ea74-cp310-cp310-linux_aarch64.whl
-./wheels/torchvision-0.18.0a0+6043bc2-cp310-cp310-linux_aarch64.whl
+# ./wheels/openai_whisper-20250625-py3-none-any.whl
+# ./wheels/onnxruntime_gpu-1.19.0-cp310-cp310-linux_aarch64.whl
+# ./wheels/torch_cuda_jetpack-2.3.0-py3-none-any.whl
+# ./wheels/torchaudio-2.3.0+952ea74-cp310-cp310-linux_aarch64.whl
+# ./wheels/torchvision-0.18.0a0+6043bc2-cp310-cp310-linux_aarch64.whl

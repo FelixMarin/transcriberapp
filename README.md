@@ -137,7 +137,7 @@ pip install wheels/onnxruntime_gpu-1.19.0-cp310-cp310-linux_aarch64.whl
 Configurar API Key:
 
 ```bash
-echo "GEMINI_API_KEY=TU_API_KEY" > .env
+echo "GOOGLE_API_KEY=TU_API_KEY" > .env
 ```
 
 ---
@@ -218,7 +218,7 @@ El botón solo se habilita cuando:
 Variables en `.env`:
 
 ```bash
-GEMINI_API_KEY=...
+GOOGLE_API_KEY=...
 SMTP_HOST=...
 SMTP_PORT=465
 SMTP_USER=...

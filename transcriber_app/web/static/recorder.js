@@ -393,7 +393,20 @@ chatSend.onclick = async () => {
 
         for await (const parcial of enviarPreguntaStreaming(msg)) {
             hideOverlay();
-            aiMsg.innerHTML = formatAsHTML(parcial);
+            let texto = parcial;
+
+            // Intentar extraer el campo "response"
+            try {
+                const json = JSON.parse(parcial);
+                if (json.response) {
+                    texto = json.response;
+                }
+            } catch (e) {
+                // Si no es JSON válido, dejamos el texto tal cual
+            }
+
+            aiMsg.innerHTML = formatAsHTML(texto);
+
             textoFinal = parcial;
         }
 
@@ -447,32 +460,45 @@ function updateSendButtonState() {
 // -----------------------------
 // Streaming de la respuesta del modelo
 // -----------------------------
-async function* enviarPreguntaStreaming(pregunta) {
-    const transcripcion = document.getElementById("transcripcionTexto").textContent;
-    const resumen = document.getElementById("mdResult").textContent;
+async function enviarPreguntaStreaming(pregunta) {
+    const transcripcion = document.getElementById("transcripcionTexto").textContent.trim();
+    const resumen = document.getElementById("mdResult").textContent.trim();
+    const modo = document.getElementById("modo").value;
 
-    const res = await fetch("/api/chat/stream", {
+    const payload = {
+        message: `
+Transcripción original:
+${transcripcion}
+
+Resultado procesado:
+${resumen}
+
+Mi pregunta es:
+${pregunta}
+        `.trim(),
+        mode: modo
+    };
+
+    const response = await fetch("/api/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            transcripcion,
-            resumen,
-            pregunta,
-            historial: chatHistory
-        })
+        body: JSON.stringify(payload)
     });
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let texto = "";
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
 
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        texto += decoder.decode(value, { stream: true });
-        yield texto; // ahora sí funciona
-    }
+    return {
+        async *[Symbol.asyncIterator]() {
+            let buffer = "";
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value);
+                yield buffer;
+            }
+        }
+    };
 }
 
 // -----------------------------

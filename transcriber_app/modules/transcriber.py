@@ -42,16 +42,30 @@ class Transcriber:
         self.model = whisper.load_model(model_size, device=device)
 
     def transcribe(self, audio_path: str) -> str:
-        """
-        Transcribe un archivo de audio usando openai-whisper.
-        """
         wav_path = ensure_wav(audio_path)
 
         result = self.model.transcribe(
             wav_path,
-            language=None,   # autodetección
-            fp16=IS_JETSON   # Jetson soporta FP16
+            language=None,
+            fp16=IS_JETSON
         )
 
         text = result.get("text", "").strip()
+        avg_logprob = result.get("avg_logprob", None)
+        no_speech_prob = result.get("no_speech_prob", None)
+        compression_ratio = result.get("compression_ratio", None)
+
+        # --- VALIDACIONES DE CALIDAD ---
+        if no_speech_prob and no_speech_prob > 0.6:
+            raise ValueError("Grabación con muy poca voz detectada")
+
+        if avg_logprob and avg_logprob < -1.0:
+            raise ValueError("La calidad de audio es demasiado baja para transcribir")
+
+        if compression_ratio and compression_ratio > 2.4:
+            raise ValueError("El audio está demasiado comprimido o distorsionado")
+
+        if len(text) < 10:
+            raise ValueError("La transcripción es demasiado corta. Posible mala calidad")
+
         return text

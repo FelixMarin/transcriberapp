@@ -62,6 +62,11 @@ def process_audio_job(job_id: str, nombre: str, modo: str, email: str):
         logger.info(f"[BACKGROUND JOB] STDOUT: {result.stdout!r}")
         logger.info(f"[BACKGROUND JOB] STDERR: {result.stderr!r}")
 
+        if result.returncode == 3:
+            JOB_STATUS[job_id] = "bad_audio"
+            logger.error("[BACKGROUND JOB] Audio rechazado por mala calidad")
+            return
+
         if result.returncode != 0:
             JOB_STATUS[job_id] = "error"
             logger.error(f"[BACKGROUND JOB] Error ejecutando CLI. returncode={result.returncode}")

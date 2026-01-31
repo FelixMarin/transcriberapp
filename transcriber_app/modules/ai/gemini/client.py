@@ -28,12 +28,8 @@ class GeminiModel(AIModel):
     def transcribe(self, audio_path: str) -> str:
         """
         Transcribe audio usando Whisper (local, optimizado para Jetson).
-        """
-        try:
-            text = self.transcriber.transcribe(audio_path)
-            return text or ""
-        except Exception as e:
-            raise RuntimeError(f"Error transcribiendo audio: {e}")
+        """        
+        return self.transcriber.transcribe(audio_path)
 
     def run_agent(self, mode: str, text: str):
         """

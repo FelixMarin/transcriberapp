@@ -94,10 +94,15 @@ def main():
     # ============================
     #   EJECUTAR PIPELINE
     # ============================
-    if input_type == "audio":
-        output = orchestrator.run_audio(path, mode)
-    else:
-        output = orchestrator.run_text(path, mode)
+    try:
+        if input_type == "audio":
+            output = orchestrator.run_audio(path, mode)
+        else:
+            output = orchestrator.run_text(path, mode)
+
+    except ValueError as e:
+        print(f"[BAD_AUDIO] {e}")
+        sys.exit(3)
 
     print(output)
 

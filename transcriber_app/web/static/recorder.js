@@ -411,21 +411,58 @@ async function processNewRecording(nombre, email, modo) {
     showOverlay();
 
     try {
-        const res = await fetch("/api/upload-audio", {
+        console.log("Enviando audio al servidor...");
+
+        const response = await fetch("/api/upload-audio", {
             method: "POST",
             body: formData
+            // Nota: NO añadir headers cuando usas FormData
+            // El navegador los establecerá automáticamente con el boundary correcto
         });
 
-        const data = await res.json();
+        console.log("Respuesta recibida, status:", response.status);
+
+        if (!response.ok) {
+            // Si el servidor responde con un error HTTP
+            const errorText = await response.text();
+            console.error("Error del servidor:", response.status, errorText);
+            throw new Error(`Error del servidor: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log("Datos recibidos:", data);
 
         if (data.job_id) {
             lastRecordingName = nombre;
             hasTranscript = true;
             startJobPolling(data.job_id);
+        } else if (data.error) {
+            throw new Error(data.error);
+        } else {
+            throw new Error("Respuesta del servidor inválida");
         }
     } catch (err) {
-        console.error("Error al enviar audio:", err);
-        alert("Error al enviar el audio o iniciar el procesamiento.");
+        console.error("Error completo al enviar audio:", err);
+
+        // Mensaje de error más específico
+        let errorMessage = "Error al enviar el audio.";
+
+        if (err.name === "TypeError" && err.message.includes("fetch")) {
+            errorMessage = "No se pudo conectar con el servidor. Verifica que el servidor esté en ejecución.";
+        } else if (err.message.includes("Failed to fetch")) {
+            errorMessage = "Error de red. Verifica tu conexión a internet.";
+        } else if (err.message.includes("CORS")) {
+            errorMessage = "Error de permisos CORS. Contacta al administrador.";
+        } else {
+            errorMessage = err.message;
+        }
+
+        alert(errorMessage);
+
+        if (elements.statusText) {
+            elements.statusText.textContent = "Error: " + errorMessage;
+        }
+    } finally {
         hideOverlay();
     }
 }

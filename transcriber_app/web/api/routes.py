@@ -1,6 +1,7 @@
 # transcriber_app/web/api/routes.py
 import os
 from fastapi import APIRouter, UploadFile, File, Form, BackgroundTasks, HTTPException
+from fastapi.responses import StreamingResponse
 from pathlib import Path
 from transcriber_app.modules.ai.ai_manager import AIManager, log_agent_result
 import uuid
@@ -77,10 +78,12 @@ async def chat_stream(payload: dict):
     mode = payload.get("mode", "default")
 
     agent = AIManager.get_agent(mode)
-    result = agent.run(message)
-    log_agent_result(result)
 
-    return {"response": result.content}
+    def stream():
+        for chunk in agent.run(message, stream=True):
+            yield chunk.content  # o chunk.text según el modelo
+
+    return StreamingResponse(stream(), media_type="text/plain")
 
 
 @router.get("/check-name")

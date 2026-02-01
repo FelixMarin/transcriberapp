@@ -95,3 +95,11 @@ class AIManager:
 
         for chunk in model.run_agent(mode, text, stream=True):
             yield chunk
+
+    @staticmethod
+    def get_agent(mode: str, model_name: str = "gemini"):
+        """
+        Devuelve el agente correspondiente al modo solicitado.
+        """
+        model = AIManager.get_model(model_name)
+        return model.agents.get(mode, model.agents["default"])

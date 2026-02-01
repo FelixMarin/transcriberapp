@@ -88,3 +88,26 @@ def check_name(name: str):
     filename = f"{name}.mp3"
     exists = os.path.exists(os.path.join(RECORDINGS_DIR, filename))
     return {"exists": exists}
+
+
+@router.post("/process-existing")
+async def process_existing(
+    nombre: str = Form(...),
+    modo: str = Form(...)
+):
+    transcript_path = Path("transcripts") / f"{nombre}.txt"
+
+    if not transcript_path.exists():
+        raise HTTPException(status_code=404, detail="Transcripción no encontrada")
+
+    text = transcript_path.read_text(encoding="utf-8")
+
+    agent = AIManager.get_agent(modo)
+    result = agent.run(text)
+    log_agent_result(result)
+
+    return {
+        "status": "done",
+        "mode": modo,
+        "content": result.content
+    }

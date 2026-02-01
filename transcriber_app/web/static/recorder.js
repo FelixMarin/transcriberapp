@@ -1,6 +1,8 @@
 let mediaRecorder;
 let audioChunks = [];
 let lastRecordingBlob = null; // Para saber si hay grabación pendiente
+let lastRecordingName = null;
+let hasTranscript = false;
 
 const recordBtn = document.getElementById("recordBtn");
 const stopBtn = document.getElementById("stopBtn");
@@ -61,7 +63,7 @@ function startJobPolling(jobId) {
         running: "Procesando audio…",
         done: "Transcripción enviada por email.",
         error: "Error durante el procesamiento.",
-        unknown: "Job no encontrado."        
+        unknown: "Job no encontrado."
     };
 
     const checkStatus = async () => {
@@ -73,78 +75,88 @@ function startJobPolling(jobId) {
 
         if (data.status === "processing" || data.status === "running") {
             setTimeout(checkStatus, 3000);
-        } else {
+            return;
+        }
+
+        // 🔥 NUEVO: manejar mala calidad
+        if (data.status === "bad_audio") {
             hideOverlay();
-            // Si el backend devuelve el markdown en data.markdown o data.resultado
-            if (data.markdown || data.resultado || data.md) {
-                const md = data.markdown || data.resultado || data.md;
+            alert("La grabación tiene mala calidad y no se ha podido transcribir.");
+            return;
+        }
+
+        // 🔥 NUEVO: marcar que ya existe transcripción
+        if (data.status === "done") {
+            hasTranscript = true;
+            lastRecordingName = document.getElementById("nombre").value.trim();
+        }
+
+        hideOverlay();
+
+        // --- resto de tu código tal cual ---
+        if (data.markdown || data.resultado || data.md) {
+            const md = data.markdown || data.resultado || data.md;
+            document.getElementById("mdResult").innerHTML = marked.parse(md);
+        } else {
+            const md = data.resultado_md || data.markdown || data.resultado || data.md;
+            if (md) {
                 document.getElementById("mdResult").innerHTML = marked.parse(md);
             } else {
-                const md = data.resultado_md || data.markdown || data.resultado || data.md;
-                if (md) {
-                    document.getElementById("mdResult").innerHTML = marked.parse(md);
-                } else {
-                    // Normalizar nombre y modo (sin tildes)
-                    const nombre = document.getElementById("nombre").value.trim()
-                        .toLowerCase()
-                        .normalize("NFD")
-                        .replace(/[\u0300-\u036f]/g, "");
+                // Normalizar nombre y modo (sin tildes)
+                const nombre = document.getElementById("nombre").value.trim()
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "");
 
-                    const modo = document.getElementById("modo").value
-                        .toLowerCase()
-                        .normalize("NFD")
-                        .replace(/[\u0300-\u036f]/g, "");
+                const modo = document.getElementById("modo").value
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "");
 
-                    // Archivos generados
-                    const archivoMd = `${nombre}_${modo}.md`;
-                    const archivoTxt = `${nombre}.txt`;
+                const archivoMd = `${nombre}_${modo}.md`;
+                const archivoTxt = `${nombre}.txt`;
 
-                    // -----------------------------
-                    // Cargar MARKDOWN
-                    // -----------------------------
-                    try {
-                        const resMd = await fetch(`/api/resultados/${archivoMd}`);
-                        if (resMd.ok) {
-                            const markdown = await resMd.text();
-                            document.getElementById("mdResult").innerHTML = marked.parse(markdown);
-                            document.getElementById("result").style.display = "block";
-                            document.getElementById("btnImprimirPDF").style.display = "inline-block";
-                            updateSendButtonState();
-                        } else {
-                            document.getElementById("btnImprimirPDF").style.display = "none";
-                            document.getElementById("mdResult").innerHTML =
-                                "<p>No se pudo cargar el Markdown generado.</p>";
-                        }
-                    } catch (e) {
+                // Cargar MARKDOWN
+                try {
+                    const resMd = await fetch(`/api/resultados/${archivoMd}`);
+                    if (resMd.ok) {
+                        const markdown = await resMd.text();
+                        document.getElementById("mdResult").innerHTML = marked.parse(markdown);
+                        document.getElementById("result").style.display = "block";
+                        document.getElementById("btnImprimirPDF").style.display = "inline-block";
+                        updateSendButtonState();
+                    } else {
                         document.getElementById("btnImprimirPDF").style.display = "none";
                         document.getElementById("mdResult").innerHTML =
-                            "<p>Error al intentar cargar el Markdown.</p>";
+                            "<p>No se pudo cargar el Markdown generado.</p>";
                     }
-
-                    // -----------------------------
-                    // Cargar TRANSCRIPCIÓN ORIGINAL
-                    // -----------------------------
-                    try {
-                        const resTxt = await fetch(`/api/transcripciones/${archivoTxt}`);
-                        if (resTxt.ok) {
-                            const texto = await resTxt.text();
-                            document.getElementById("transcripcionTexto").textContent = texto;
-                            document.getElementById("transcripcion").style.display = "block";
-                            updateSendButtonState();
-                        } else {
-                            document.getElementById("transcripcionTexto").textContent =
-                                "No se pudo cargar la transcripción original.";
-                        }
-                    } catch (e) {
-                        document.getElementById("transcripcionTexto").textContent =
-                            "Error al cargar la transcripción original.";
-                    }
-                    // Reset del historial del chat al cargar una nueva transcripción
-                    chatPanel.classList.remove("open");
-                    chatHistory = [];
-                    chatMessages.innerHTML = "";
-                    updateSendButtonState();
+                } catch (e) {
+                    document.getElementById("btnImprimirPDF").style.display = "none";
+                    document.getElementById("mdResult").innerHTML =
+                        "<p>Error al intentar cargar el Markdown.</p>";
                 }
+
+                // Cargar TRANSCRIPCIÓN ORIGINAL
+                try {
+                    const resTxt = await fetch(`/api/transcripciones/${archivoTxt}`);
+                    if (resTxt.ok) {
+                        const texto = await resTxt.text();
+                        document.getElementById("transcripcionTexto").textContent = texto;
+                        document.getElementById("transcripcion").style.display = "block";
+                        updateSendButtonState();
+                    } else {
+                        document.getElementById("transcripcionTexto").textContent =
+                            "No se pudo cargar la transcripción original.";
+                    }
+                } catch (e) {
+                    document.getElementById("transcripcionTexto").textContent =
+                        "Error al cargar la transcripción original.";
+                }
+
+                chatPanel.classList.remove("open");
+                chatHistory = [];
+                chatMessages.innerHTML = "";
+                updateSendButtonState();
             }
         }
     };
@@ -208,7 +220,7 @@ downloadBtn.onclick = () => {
 };
 
 // -----------------------------
-// Enviar audio
+// Enviar audio o reutilizar transcripción
 // -----------------------------
 sendBtn.onclick = async () => {
     const nombre = document.getElementById("nombre").value.trim();
@@ -220,6 +232,44 @@ sendBtn.onclick = async () => {
         return;
     }
 
+    // -----------------------------------------
+    // CASO 1: YA EXISTE TRANSCRIPCIÓN → NO reenviar audio
+    // -----------------------------------------
+    if (hasTranscript && lastRecordingName === nombre) {
+
+        const formData = new FormData();
+        formData.append("nombre", nombre);
+        formData.append("modo", modo);
+
+        showOverlay();
+
+        try {
+            const res = await fetch("/api/process-existing", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await res.json();
+
+            if (data.status === "done") {
+                addResultBox(data.mode, data.content);
+            } else {
+                alert("Error procesando la transcripción existente.");
+            }
+
+        } catch (err) {
+            console.error("Error:", err);
+            alert("Error procesando la transcripción existente.");
+        } finally {
+            hideOverlay();
+        }
+
+        return;
+    }
+
+    // -----------------------------------------
+    // CASO 2: PRIMERA VEZ → enviar audio
+    // -----------------------------------------
     const blob = lastRecordingBlob;
     if (!blob) {
         alert("No hay grabación disponible.");
@@ -235,7 +285,6 @@ sendBtn.onclick = async () => {
     output.textContent = "Enviando audio y lanzando procesamiento…";
     statusText.textContent = "Procesando audio…";
 
-    // 🔥 Bloquear toda la interfaz
     showOverlay();
 
     try {
@@ -248,14 +297,14 @@ sendBtn.onclick = async () => {
         output.textContent = JSON.stringify(data, null, 2);
 
         if (data.job_id) {
+            lastRecordingName = nombre;
+            hasTranscript = true;
             startJobPolling(data.job_id);
         }
+
     } catch (err) {
         console.error("Error al enviar audio:", err);
         alert("Error al enviar el audio o iniciar el procesamiento.");
-    } finally {
-        // ❌ NO ocultar aquí
-        // hideOverlay();
     }
 };
 
@@ -570,5 +619,18 @@ async function validateName(name) {
     } catch (err) {
         console.error("Error comprobando nombre:", err);
     }
+}
+
+function addResultBox(mode, content) {
+    const container = document.getElementById("multiResults");
+
+    const html = `
+    <details class="result-box" open>
+        <summary>${mode.toUpperCase()}</summary>
+        <div class="markdown-body">${marked.parse(content)}</div>
+    </details>
+    `;
+
+    container.insertAdjacentHTML("beforeend", html);
 }
 

@@ -6,7 +6,7 @@ from transcriber_app.config import USE_MODEL, AVAILABLE_MODES_DICT
 
 def load_prompt(name: str) -> str:
     with open(
-        f"transcriber_app/modules/ai/prompts/{name}.md",
+        f"transcriber_app/modules/ai/gemini/prompts/{name}.md",
         "r",
         encoding="utf-8"
     ) as f:

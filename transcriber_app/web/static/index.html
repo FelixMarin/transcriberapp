@@ -2,122 +2,211 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>TranscriberApp Web</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TranscriberApp Web - Transcripción de Audio Inteligente</title>
+    <meta name="description" content="Aplicación web para grabar, transcribir y procesar audio con inteligencia artificial">
     <link rel="stylesheet" href="/static/styles.css">
     <link rel="icon" href="data:,">
-    <script src="/static/marked.min.js"></script>
+    <script src="/static/marked.min.js" defer></script>
+    <!-- Precargar recursos importantes -->
+    <!-- <link rel="preload" href="/static/recorder.js" as="script" crossorigin> -->
 </head>
 <body>
+    <!-- Skip link para accesibilidad -->
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
 
-    <h1>TranscriberApp<span id="sessionLabel">Sin sesión</span></h1>
+    <!-- Encabezado principal -->
+    <header class="app-header">
+        <h1 class="app-title">
+            <span class="app-name">TranscriberApp</span>
+            <span id="sessionLabel" class="session-status" aria-live="polite" title="Estado de la sesión">Sin sesión</span>
+        </h1>
+    </header>
 
-    <section id="sessionSetup">
-        <h2>Sesión actual</h2>
-        <div class="form-group">
-            <input type="text" id="nombre" placeholder="ej: reunion_enero" oninput="validateSessionName(this.value)">
-            <small id="name-warning" style="color: red; display: none; margin-top: 4px;">
-                El nombre es obligatorio para comenzar.
-            </small>
+    <!-- Contenido principal -->
+    <main id="main-content" class="main-content">
+        <!-- Configuración de sesión -->
+        <section id="sessionSetup" class="card" aria-labelledby="sessionSetupTitle">
+            <h2 id="sessionSetupTitle" class="section-title">Sesión actual</h2>
+            <div class="form-group">
+                <label for="nombre" class="visually-hidden">Nombre de la sesión</label>
+                <input type="text" 
+                       id="nombre" 
+                       class="form-control"
+                       placeholder="ej: reunion_enero" 
+                       aria-describedby="name-warning"
+                       aria-required="true"
+                       required>
+                <small id="name-warning" class="warning-text" role="alert" hidden>
+                    El nombre es obligatorio para comenzar.
+                </small>
+            </div>
+        </section>
+
+        <!-- Formulario de configuración -->
+        <section id="form" class="card" aria-labelledby="formTitle">
+            <h2 id="formTitle" class="visually-hidden">Configuración</h2>
+            <div class="form-row-horizontal">
+                <div class="form-group">
+                    <label for="email">Correo electrónico:</label>
+                    <input type="email" 
+                           id="email" 
+                           class="form-control"
+                           placeholder="ej: usuario@correo.com"
+                           aria-required="true"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label for="modo">Modo de procesamiento:</label>
+                    <select id="modo" class="form-control" aria-label="Selecciona el modo de procesamiento">
+                        <option value="default">Default</option>
+                        <option value="tecnico">Técnico</option>
+                        <option value="refinamiento">Refinamiento</option>
+                        <option value="ejecutivo">Ejecutivo</option>
+                        <option value="bullet">Bullet</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grabación de audio -->
+        <section id="recorder" class="card recorder-section" aria-labelledby="recorderTitle">
+            <h2 id="recorderTitle" class="section-title">Grabación de audio</h2>
+            
+            <div class="button-group" role="group" aria-label="Controles de grabación">
+                <button id="recordBtn" class="btn btn-record" aria-label="Iniciar grabación">
+                    <span aria-hidden="true">🎙️</span> Grabar
+                </button>
+                <button id="stopBtn" class="btn btn-stop" disabled aria-label="Detener grabación">
+                    <span aria-hidden="true">⏹️</span> Parar
+                </button>
+                <button id="deleteBtn" class="btn btn-delete" disabled aria-label="Borrar grabación">
+                    <span aria-hidden="true">🗑️</span> Borrar
+                </button>
+                <button id="downloadBtn" class="btn btn-download" disabled aria-label="Descargar grabación">
+                    <span aria-hidden="true">💾</span> Descargar
+                </button>
+                <button id="uploadBtn" class="btn btn-upload" aria-label="Cargar archivo de audio">
+                    <span aria-hidden="true">📂</span> Cargar
+                </button>
+            </div>
+            
+            <input type="file" 
+                   id="fileInput" 
+                   accept="audio/*" 
+                   class="visually-hidden" 
+                   aria-label="Seleccionar archivo de audio">
+
+            <p id="status" class="status-message" role="status" aria-live="polite">
+                Esperando grabación…
+            </p>
+
+            <audio id="preview" 
+                   controls 
+                   class="audio-preview" 
+                   hidden
+                   aria-label="Previsualización del audio grabado">
+                Tu navegador no soporta el elemento de audio.
+            </audio>
+        </section>
+
+        <!-- Botón de acción principal -->
+        <div class="action-container">
+            <button id="sendBtn" class="btn btn-primary btn-large" disabled aria-label="Procesar y enviar grabación">
+                Procesar y enviar
+            </button>
         </div>
-    </section>
 
-    <div id="historyPanel" class="history-panel">
+        <!-- Resultados de transcripción -->
+        <section id="transcripcion" class="card collapsible-section" hidden aria-labelledby="transcriptionTitle">
+            <h2 id="transcriptionTitle" class="collapsible-header">
+                <button class="collapsible-toggle" aria-expanded="false" aria-controls="transcriptionContent">
+                    <span class="arrow" aria-hidden="true">▶</span>
+                    Transcripción original
+                </button>
+            </h2>
+            <div id="transcriptionContent" class="collapsible-content" hidden>
+                <pre id="transcripcionTexto" class="transcription-text" tabindex="0"></pre>
+            </div>
+        </section>
+
+        <!-- Resultado procesado -->
+        <section id="result" class="card collapsible-section" hidden aria-labelledby="resultTitle">
+            <h2 id="resultTitle" class="collapsible-header">
+                <button class="collapsible-toggle" aria-expanded="false" aria-controls="resultContent">
+                    <span class="arrow" aria-hidden="true">▶</span>
+                    Resultado procesado
+                </button>
+            </h2>
+            <div id="resultContent" class="collapsible-content">
+                <button id="btnImprimirPDF" class="btn btn-print" aria-label="Imprimir resultado en PDF">
+                    <span aria-hidden="true">🖨️</span> Imprimir PDF
+                </button>
+                <div id="mdResult" class="markdown-body" tabindex="0"></div>
+            </div>
+        </section>
+
+        <!-- Resultados múltiples -->
+        <section id="multiResults" class="card" hidden aria-label="Resultados adicionales">
+            <!-- Se añadirán dinámicamente -->
+        </section>
+    </main>
+
+    <!-- Panel lateral de historial -->
+    <aside id="historyPanel" class="history-panel" role="complementary" aria-label="Historial de transcripciones">
         <div class="history-header">
             <h3 class="history-title">Transcripciones</h3>
-            <button class="history-close" id="historyClose">×</button>
+            <button id="historyClose" class="btn btn-close" aria-label="Cerrar panel de historial">
+                <span aria-hidden="true">×</span>
+            </button>
         </div>
-        <ul id="historyList"></ul>
-    </div>
+        <nav>
+            <ul id="historyList" class="history-list" role="list"></ul>
+        </nav>
+    </aside>
 
-    <div id="historyToggle" class="history-toggle">
-        <span class="icon">☰</span>
-    </div>
-
-    <section id="form">
-
-        <div class="form-row-horizontal">
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" placeholder="ej: usuario@correo.com">
-            </div>
-
-            <div class="form-group">
-                <label for="modo">Modo:</label>
-                <select id="modo">
-                    <option value="default">Default</option>
-                    <option value="tecnico">Técnico</option>
-                    <option value="refinamiento">Refinamiento</option>
-                    <option value="ejecutivo">Ejecutivo</option>
-                    <option value="bullet">Bullet</option>
-                </select>
-            </div>
-        </div>        
-    </section>
-
-    <section id="recorder">
-        <h2>Grabación de audio</h2>
-
-        <button id="recordBtn">🎙️ Grabar</button>
-        <button id="stopBtn" disabled>⏹️ Parar</button>
-        <button id="deleteBtn" disabled>🗑️ Borrar grabación</button>
-        <button id="downloadBtn" disabled>💾 Descargar grabación</button>
-        <button id="uploadBtn">📂 Cargar grabación</button>
-        <input type="file" id="fileInput" accept="audio/*" style="display:none;">
-
-        <p id="status">Esperando grabación…</p>
-
-        <audio id="preview" controls style="display:none;"></audio>        
-    </section>
-
-    <div class="buttonContainer">
-        <button id="sendBtn" disabled>Procesar y enviar</button>
-    </div>
-
-    <section id="transcripcion" style="display:none;">
-        <h2 class="collapsible">
-            <span class="arrow">▶</span> Transcripción original
-        </h2>
-        <div class="content" style="display:none;">
-            <pre id="transcripcionTexto"></pre>
-        </div>
-    </section>
-
-    <section id="result" style="display:none;">
-        <h2 class="collapsible open">
-            <span class="arrow">▼</span> Resultado procesado
-        </h2>
-        <div class="content">
-            <button id="btnImprimirPDF" class="btn-imprimir">🖨️ Imprimir PDF</button>
-            <div id="mdResult" class="markdown-body"></div>
-        </div>
-        <pre id="output" style="display:none;"></pre>
-    </section>
-    <section id="multiResults">
-        <!-- Aquí se irán añadiendo los resultados colapsables -->
-    </section>
-
-    <!-- Botón hamburguesa -->
-    <div id="chatToggle" class="chat-toggle">☰</div>
+    <!-- Botón para abrir historial -->
+    <button id="historyToggle" class="floating-btn history-toggle" aria-label="Abrir historial de transcripciones">
+        <span class="icon" aria-hidden="true">☰</span>
+    </button>
 
     <!-- Panel lateral del chat -->
-    <div id="chatPanel" class="chat-panel">
+    <aside id="chatPanel" class="chat-panel" role="complementary" aria-label="Asistente de inteligencia artificial">
         <div class="chat-header">
             <h3>Asistente IA</h3>
-            <button id="chatClose" class="chat-close">×</button>
+            <button id="chatClose" class="btn btn-close" aria-label="Cerrar panel del asistente">
+                <span aria-hidden="true">×</span>
+            </button>
         </div>
 
-        <div id="chatMessages" class="chat-messages"></div>
+        <div id="chatMessages" class="chat-messages" role="log" aria-live="polite"></div>
 
         <div class="chat-input-container">
-            <input id="chatInput" type="text" placeholder="Preguntar sobre la transcripción…" />
-            <button id="chatSend">Enviar</button>
+            <label for="chatInput" class="visually-hidden">Pregunta para el asistente</label>
+            <input id="chatInput" 
+                   class="form-control"
+                   type="text" 
+                   placeholder="Preguntar sobre la transcripción…"
+                   aria-label="Escribe tu pregunta">
+            <button id="chatSend" class="btn btn-chat-send" aria-label="Enviar pregunta">
+                Enviar
+            </button>
         </div>
+    </aside>
+
+    <!-- Botón para abrir chat -->
+    <button id="chatToggle" class="floating-btn chat-toggle" aria-label="Abrir asistente de inteligencia artificial">
+        <span class="icon" aria-hidden="true">☰</span>
+    </button>
+
+    <!-- Overlay de carga -->
+    <div id="overlayLoading" class="overlay-loading hidden" role="status" aria-label="Cargando" aria-live="assertive">
+        <div class="loader" aria-hidden="true"></div>
+        <span class="visually-hidden">Procesando, por favor espere...</span>
     </div>
 
-    <div id="overlayLoading" class="overlay-loading hidden">
-        <div class="loader"></div>
-    </div>
-
-    <script type="module" src="/static/recorder.js?v=21"></script>
+    <!-- Scripts al final para mejor rendimiento -->
+    <script type="module" src="/static/recorder.js?v=24" defer></script>
 </body>
 </html>

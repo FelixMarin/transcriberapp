@@ -8,37 +8,56 @@ let hasTranscript = false;
 let lastRecordingDuration = null;
 let chatHistory = [];
 
-// Cache de elementos DOM
+// Cache de elementos DOM - ACTUALIZADO para coincidir con el nuevo HTML
 const elements = {
+    // Botones principales
     recordBtn: document.getElementById("recordBtn"),
     stopBtn: document.getElementById("stopBtn"),
     sendBtn: document.getElementById("sendBtn"),
     deleteBtn: document.getElementById("deleteBtn"),
     downloadBtn: document.getElementById("downloadBtn"),
+    uploadBtn: document.getElementById("uploadBtn"),
+
+    // Elementos de estado y preview
     statusText: document.getElementById("status"),
     preview: document.getElementById("preview"),
-    output: document.getElementById("output"),
-    uploadBtn: document.getElementById("uploadBtn"),
     fileInput: document.getElementById("fileInput"),
+
+    // Elementos del chat
     chatToggle: document.getElementById("chatToggle"),
     chatPanel: document.getElementById("chatPanel"),
     chatClose: document.getElementById("chatClose"),
     chatMessages: document.getElementById("chatMessages"),
     chatInput: document.getElementById("chatInput"),
     chatSend: document.getElementById("chatSend"),
+
+    // Elementos del formulario
     nombre: document.getElementById("nombre"),
     email: document.getElementById("email"),
     modo: document.getElementById("modo"),
+
+    // Elementos de información y warning
     nameWarning: document.getElementById("name-warning"),
     sessionLabel: document.getElementById("sessionLabel"),
+
+    // Elementos de resultados
     transcripcionTexto: document.getElementById("transcripcionTexto"),
     mdResult: document.getElementById("mdResult"),
+
+    // Elementos de UI
     overlayLoading: document.getElementById("overlayLoading"),
     btnImprimirPDF: document.getElementById("btnImprimirPDF"),
     historyToggle: document.getElementById("historyToggle"),
     historyPanel: document.getElementById("historyPanel"),
     historyList: document.getElementById("historyList"),
-    multiResults: document.getElementById("multiResults")
+    multiResults: document.getElementById("multiResults"),
+    historyClose: document.getElementById("historyClose"),
+
+    // Elementos colapsables (nuevos selectores)
+    transcriptionTitle: document.getElementById("transcriptionTitle"),
+    resultTitle: document.getElementById("resultTitle"),
+    transcriptionContent: document.getElementById("transcriptionContent"),
+    resultContent: document.getElementById("resultContent")
 };
 
 // Verificar que todos los elementos existen
@@ -52,6 +71,8 @@ function validateElements() {
 
     if (missingElements.length > 0) {
         console.warn("Elementos DOM no encontrados:", missingElements);
+        // No es crítico si algunos elementos opcionales no existen
+        // Solo mostrar warning para depuración
     }
 }
 
@@ -79,6 +100,7 @@ async function generateId(nombre, fecha) {
 }
 
 function formatAsHTML(text) {
+    if (!text) return "";
     const escaped = text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -146,18 +168,41 @@ function updateSendButtonState() {
 // Manejo de sesión
 // -----------------------------
 function validateSessionName(nombre) {
-    if (!nombre) return;
+    if (!nombre && elements.nombre) {
+        nombre = elements.nombre.value;
+    }
 
     localStorage.setItem("nombreSesion", nombre.trim());
     const isValid = nombre.trim().length > 0;
 
+    if (elements.sessionLabel) {
+        elements.sessionLabel.textContent = isValid ? nombre.trim() : "Sin sesión";
+
+        // Alternar clase según si hay sesión activa
+        if (isValid) {
+            elements.sessionLabel.classList.add("session-active");
+            elements.sessionLabel.title = "Sesión activa: " + nombre.trim();
+        } else {
+            elements.sessionLabel.classList.remove("session-active");
+            elements.sessionLabel.title = "No hay sesión activa";
+        }
+    }
+
+    // Actualizar estado de botones
     if (elements.recordBtn) elements.recordBtn.disabled = !isValid;
     if (elements.stopBtn) elements.stopBtn.disabled = true;
     if (elements.deleteBtn) elements.deleteBtn.disabled = true;
     if (elements.downloadBtn) elements.downloadBtn.disabled = true;
     if (elements.sendBtn) elements.sendBtn.disabled = !isValid;
-    if (elements.nameWarning) elements.nameWarning.style.display = isValid ? "none" : "block";
-    if (elements.sessionLabel) elements.sessionLabel.textContent = nombre.trim() || "Sin sesión";
+
+    // Mostrar/ocultar warning
+    if (elements.nameWarning) {
+        if (isValid) {
+            elements.nameWarning.hidden = true;
+        } else {
+            elements.nameWarning.hidden = false;
+        }
+    }
 }
 
 // -----------------------------
@@ -181,6 +226,9 @@ function setupRecordingHandlers() {
             if (elements.statusText) elements.statusText.textContent = "Grabando…";
             elements.recordBtn.disabled = true;
             elements.stopBtn.disabled = false;
+
+            // Añadir clase de animación
+            elements.recordBtn.classList.add("recording");
         } catch (error) {
             console.error("Error al acceder al micrófono:", error);
             alert("No se pudo acceder al micrófono. Verifica los permisos.");
@@ -191,8 +239,11 @@ function setupRecordingHandlers() {
         if (mediaRecorder && mediaRecorder.state === "recording") {
             mediaRecorder.stop();
             if (elements.statusText) elements.statusText.textContent = "Grabación finalizada.";
-            elements.recordBtn.disabled = false;
-            elements.stopBtn.disabled = true;
+            if (elements.recordBtn) {
+                elements.recordBtn.disabled = false;
+                elements.recordBtn.classList.remove("recording");
+            }
+            if (elements.stopBtn) elements.stopBtn.disabled = true;
         }
     };
 }
@@ -211,7 +262,7 @@ function handleRecordingStop() {
     const url = URL.createObjectURL(lastRecordingBlob);
     if (elements.preview) {
         elements.preview.src = url;
-        elements.preview.style.display = "block";
+        elements.preview.hidden = false;
     }
 
     validateForm();
@@ -223,21 +274,21 @@ function handleRecordingStop() {
 // Manejo de archivos de audio
 // -----------------------------
 function setupFileHandlers() {
-    if (!elements.downloadBtn) return;
+    if (elements.downloadBtn) {
+        elements.downloadBtn.onclick = () => {
+            if (!lastRecordingBlob) return;
 
-    elements.downloadBtn.onclick = () => {
-        if (!lastRecordingBlob) return;
+            const nombre = elements.nombre?.value?.trim() || "grabacion";
+            const url = URL.createObjectURL(lastRecordingBlob);
 
-        const nombre = elements.nombre?.value?.trim() || "grabacion";
-        const url = URL.createObjectURL(lastRecordingBlob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${nombre}.mp3`;
+            a.click();
 
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${nombre}.mp3`;
-        a.click();
-
-        URL.revokeObjectURL(url);
-    };
+            URL.revokeObjectURL(url);
+        };
+    }
 
     if (elements.deleteBtn) {
         elements.deleteBtn.onclick = () => {
@@ -255,7 +306,7 @@ function setupFileHandlers() {
 
             if (elements.preview) {
                 elements.preview.src = "";
-                elements.preview.style.display = "none";
+                elements.preview.hidden = true;
             }
 
             if (elements.sendBtn) elements.sendBtn.disabled = true;
@@ -281,7 +332,7 @@ function setupFileHandlers() {
             const url = URL.createObjectURL(file);
             if (elements.preview) {
                 elements.preview.src = url;
-                elements.preview.style.display = "block";
+                elements.preview.hidden = false;
             }
 
             validateForm();
@@ -355,7 +406,6 @@ async function processNewRecording(nombre, email, modo) {
     formData.append("modo", modo);
     formData.append("email", email);
 
-    if (elements.output) elements.output.textContent = "Enviando audio y lanzando procesamiento…";
     if (elements.statusText) elements.statusText.textContent = "Procesando audio…";
 
     showOverlay();
@@ -367,7 +417,6 @@ async function processNewRecording(nombre, email, modo) {
         });
 
         const data = await res.json();
-        if (elements.output) elements.output.textContent = JSON.stringify(data, null, 2);
 
         if (data.job_id) {
             lastRecordingName = nombre;
@@ -377,6 +426,7 @@ async function processNewRecording(nombre, email, modo) {
     } catch (err) {
         console.error("Error al enviar audio:", err);
         alert("Error al enviar el audio o iniciar el procesamiento.");
+        hideOverlay();
     }
 }
 
@@ -389,7 +439,6 @@ async function startJobPolling(jobId) {
             const res = await fetch(`/api/status/${jobId}`);
             const data = await res.json();
 
-            if (elements.output) elements.output.textContent = JSON.stringify(data, null, 2);
             if (elements.statusText) elements.statusText.textContent = getStatusMessage(data.status);
 
             if (data.status === "processing" || data.status === "running") {
@@ -437,7 +486,7 @@ async function handleJobCompletion(data) {
     if (md && elements.mdResult) {
         elements.mdResult.innerHTML = parseMarkdown(md);
         const resultSection = document.getElementById("result");
-        if (resultSection) resultSection.style.display = "block";
+        if (resultSection) resultSection.hidden = false;
         if (elements.btnImprimirPDF) elements.btnImprimirPDF.style.display = "inline-block";
     } else {
         // Si no viene en la respuesta, cargar desde archivos
@@ -465,7 +514,7 @@ async function loadFromFiles() {
             if (elements.mdResult) {
                 elements.mdResult.innerHTML = parseMarkdown(markdown);
                 const resultSection = document.getElementById("result");
-                if (resultSection) resultSection.style.display = "block";
+                if (resultSection) resultSection.hidden = false;
                 if (elements.btnImprimirPDF) elements.btnImprimirPDF.style.display = "inline-block";
             }
             return markdown;
@@ -487,7 +536,7 @@ async function loadTranscriptionOriginal() {
             if (elements.transcripcionTexto) {
                 elements.transcripcionTexto.textContent = texto;
                 const transcripcionSection = document.getElementById("transcripcion");
-                if (transcripcionSection) transcripcionSection.style.display = "block";
+                if (transcripcionSection) transcripcionSection.hidden = false;
             }
             return texto;
         }
@@ -631,29 +680,32 @@ function setupHistoryHandlers() {
 
     elements.historyToggle.onclick = toggleHistoryPanel;
 
-    // Si añades el botón de cerrar dentro del panel
-    const historyClose = document.getElementById('historyClose');
-    if (historyClose) {
-        historyClose.onclick = toggleHistoryPanel;
+    if (elements.historyClose) {
+        elements.historyClose.onclick = toggleHistoryPanel;
     }
 
-    document.querySelectorAll(".collapsible").forEach(header => {
-        header.addEventListener("click", toggleCollapsible);
+    // Configurar colapsables
+    document.querySelectorAll(".collapsible-toggle").forEach(button => {
+        button.addEventListener("click", toggleCollapsible);
     });
 }
 
 function toggleCollapsible() {
-    const content = this.nextElementSibling;
-    const isOpen = this.classList.contains("open");
+    const isExpanded = this.getAttribute("aria-expanded") === "true";
+    const contentId = this.getAttribute("aria-controls");
+    const content = document.getElementById(contentId);
+    const arrow = this.querySelector(".arrow");
 
-    if (isOpen) {
-        content.style.display = "none";
-        this.classList.remove("open");
-        this.querySelector(".arrow").textContent = "▶";
-    } else {
-        content.style.display = "block";
-        this.classList.add("open");
-        this.querySelector(".arrow").textContent = "▼";
+    if (content && arrow) {
+        if (isExpanded) {
+            content.hidden = true;
+            this.setAttribute("aria-expanded", "false");
+            arrow.textContent = "▶";
+        } else {
+            content.hidden = false;
+            this.setAttribute("aria-expanded", "true");
+            arrow.textContent = "▼";
+        }
     }
 }
 
@@ -686,7 +738,13 @@ async function loadHistoryItems() {
                 const li = document.createElement("li");
                 const fecha = new Date(item.fecha).toLocaleString();
                 li.textContent = `${item.nombre} (${fecha})`;
+                li.tabIndex = 0;
                 li.onclick = () => loadTranscriptionFromHistory(item.id);
+                li.onkeypress = (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        loadTranscriptionFromHistory(item.id);
+                    }
+                };
                 elements.historyList.appendChild(li);
             });
     } catch (error) {
@@ -710,12 +768,13 @@ async function loadTranscriptionFromHistory(id) {
         if (elements.transcripcionTexto) {
             elements.transcripcionTexto.textContent = item.transcripcion;
             const transcripcionSection = document.getElementById("transcripcion");
-            if (transcripcionSection) transcripcionSection.style.display = "block";
+            if (transcripcionSection) transcripcionSection.hidden = false;
         }
 
         // Mostrar resúmenes guardados
         if (elements.multiResults) {
             elements.multiResults.innerHTML = "";
+            elements.multiResults.hidden = false;
             for (const modo in item.resumenes) {
                 addResultBox(modo, item.resumenes[modo]);
             }
@@ -725,11 +784,14 @@ async function loadTranscriptionFromHistory(id) {
         if (item.grabacion && elements.preview) {
             const url = URL.createObjectURL(item.grabacion);
             elements.preview.src = url;
-            elements.preview.style.display = "block";
+            elements.preview.hidden = false;
         }
 
         lastRecordingName = item.nombre;
         hasTranscript = true;
+
+        // Actualizar sesión
+        validateSessionName(item.nombre);
     } catch (error) {
         console.error("Error cargando transcripción del historial:", error);
         alert("Error al cargar la transcripción del historial.");
@@ -794,27 +856,27 @@ function init() {
     // Validar que todos los elementos existen
     validateElements();
 
-    // Configurar event listeners
+    // Configurar event listeners del formulario
     if (elements.nombre) {
-        elements.nombre.oninput = () => {
+        elements.nombre.addEventListener("input", () => {
             validateSessionName(elements.nombre.value);
             validateForm();
             updateSendButtonState();
-        };
+        });
     }
 
     if (elements.email) {
-        elements.email.oninput = () => {
+        elements.email.addEventListener("input", () => {
             validateForm();
             updateSendButtonState();
-        };
+        });
     }
 
     if (elements.modo) {
-        elements.modo.onchange = () => {
+        elements.modo.addEventListener("change", () => {
             validateForm();
             updateSendButtonState();
-        };
+        });
     }
 
     // Restaurar sesión guardada
@@ -822,6 +884,9 @@ function init() {
     if (nombreGuardado && elements.nombre) {
         elements.nombre.value = nombreGuardado;
         validateSessionName(nombreGuardado);
+    } else {
+        // Asegurarse de que el label muestre "Sin sesión" correctamente
+        validateSessionName("");
     }
 
     // Configurar manejadores
@@ -835,6 +900,21 @@ function init() {
     // Configurar botón de enviar
     if (elements.sendBtn) {
         elements.sendBtn.onclick = sendAudio;
+    }
+
+    // Inicializar colapsables
+    if (elements.transcriptionTitle) {
+        const transcriptionButton = elements.transcriptionTitle.querySelector(".collapsible-toggle");
+        if (transcriptionButton) {
+            transcriptionButton.addEventListener("click", toggleCollapsible);
+        }
+    }
+
+    if (elements.resultTitle) {
+        const resultButton = elements.resultTitle.querySelector(".collapsible-toggle");
+        if (resultButton) {
+            resultButton.addEventListener("click", toggleCollapsible);
+        }
     }
 }
 

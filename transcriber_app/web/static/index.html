@@ -4,39 +4,38 @@
     <meta charset="UTF-8">
     <title>TranscriberApp Web</title>
     <link rel="stylesheet" href="/static/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="icon" href="data:,">
+    <script src="/static/marked.min.js"></script>
 </head>
 <body>
 
-    <h1>TranscriberApp</h1>
+    <h1>TranscriberApp<span id="sessionLabel">Sin sesión</span></h1>
 
-    <section id="recorder">
-        <h2>Grabación de audio</h2>
-
-        <button id="recordBtn">🎙️ Grabar</button>
-        <button id="stopBtn" disabled>⏹️ Parar</button>
-        <button id="deleteBtn" disabled>🗑️ Borrar grabación</button>
-        <button id="downloadBtn" disabled>💾 Descargar grabación</button>
-        <button id="uploadBtn">📂 Cargar grabación</button>
-        <input type="file" id="fileInput" accept="audio/*" style="display:none;">
-
-        <p id="status">Esperando grabación…</p>
-
-        <audio id="preview" controls style="display:none;"></audio>
+    <section id="sessionSetup">
+        <h2>Sesión actual</h2>
+        <div class="form-group">
+            <input type="text" id="nombre" placeholder="ej: reunion_enero" oninput="validateSessionName(this.value)">
+            <small id="name-warning" style="color: red; display: none; margin-top: 4px;">
+                El nombre es obligatorio para comenzar.
+            </small>
+        </div>
     </section>
 
+    <div id="historyPanel" class="history-panel">
+        <div class="history-header">
+            <h3 class="history-title">Transcripciones</h3>
+            <button class="history-close" id="historyClose">×</button>
+        </div>
+        <ul id="historyList"></ul>
+    </div>
+
+    <div id="historyToggle" class="history-toggle">
+        <span class="icon">☰</span>
+    </div>
+
     <section id="form">
-        <h2>Datos del procesamiento</h2>
 
-        <div class="form-row">
-            <div class="form-group">
-                <label for="nombre">Nombre:</label>
-                <input type="text" id="nombre" placeholder="ej: reunion_enero" oninput="validateName(this.value)">
-                <small id="name-warning" style="color: red; display: none; margin-top: 4px;">
-                    <!-- mensaje dinámico -->
-                </small>
-            </div>
-
+        <div class="form-row-horizontal">
             <div class="form-group">
                 <label for="email">Email:</label>
                 <input type="email" id="email" placeholder="ej: usuario@correo.com">
@@ -52,10 +51,27 @@
                     <option value="bullet">Bullet</option>
                 </select>
             </div>
-        </div>
-
-        <button id="sendBtn" disabled>Procesar y enviar</button>
+        </div>        
     </section>
+
+    <section id="recorder">
+        <h2>Grabación de audio</h2>
+
+        <button id="recordBtn">🎙️ Grabar</button>
+        <button id="stopBtn" disabled>⏹️ Parar</button>
+        <button id="deleteBtn" disabled>🗑️ Borrar grabación</button>
+        <button id="downloadBtn" disabled>💾 Descargar grabación</button>
+        <button id="uploadBtn">📂 Cargar grabación</button>
+        <input type="file" id="fileInput" accept="audio/*" style="display:none;">
+
+        <p id="status">Esperando grabación…</p>
+
+        <audio id="preview" controls style="display:none;"></audio>        
+    </section>
+
+    <div class="buttonContainer">
+        <button id="sendBtn" disabled>Procesar y enviar</button>
+    </div>
 
     <section id="transcripcion" style="display:none;">
         <h2 class="collapsible">
@@ -102,6 +118,6 @@
         <div class="loader"></div>
     </div>
 
-    <script src="/static/recorder.js?v=11"></script>
+    <script type="module" src="/static/recorder.js?v=21"></script>
 </body>
 </html>

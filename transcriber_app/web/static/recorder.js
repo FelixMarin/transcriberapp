@@ -318,6 +318,8 @@ function setupFileHandlers() {
             audioChunks = [];
             lastRecordingBlob = null;
 
+            enableRecordingAndClearTooltip();
+
             if (elements.preview) {
                 elements.preview.src = "";
                 elements.preview.hidden = true;
@@ -354,6 +356,9 @@ function setupFileHandlers() {
             if (elements.deleteBtn) elements.deleteBtn.disabled = false;
             if (elements.downloadBtn) elements.downloadBtn.disabled = false;
             if (elements.recordBtn) elements.recordBtn.disabled = true;
+
+            disableRecordingWithTooltip();
+
             if (elements.statusText) elements.statusText.textContent = `Grabación cargada: ${file.name}`;
         };
     }
@@ -577,6 +582,9 @@ async function loadFromFiles() {
 
             return markdown;
         }
+
+        disableRecordingWithTooltip();
+
     } catch (e) {
         console.error("Error cargando markdown:", e);
     }
@@ -973,6 +981,20 @@ function init() {
         if (resultButton) {
             resultButton.addEventListener("click", toggleCollapsible);
         }
+    }
+}
+
+function disableRecordingWithTooltip() {
+    if (elements.recordBtn) {
+        elements.recordBtn.disabled = true;
+        elements.recordBtn.title = "Audio cargado — grabación deshabilitada";
+    }
+}
+
+function enableRecordingAndClearTooltip() {
+    if (elements.recordBtn) {
+        elements.recordBtn.disabled = false;
+        elements.recordBtn.title = "";
     }
 }
 

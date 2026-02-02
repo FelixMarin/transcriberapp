@@ -184,23 +184,28 @@ function validateSessionName(nombre) {
         nombre = elements.nombre.value;
     }
 
-    localStorage.setItem("nombreSesion", nombre.trim());
-    const isValid = nombre.trim().length > 0;
+    const trimmed = nombre.trim();
+    const isValid = trimmed.length >= 5;   // 🔥 Validación correcta
 
+    // Guardar solo si es válido
+    if (isValid) {
+        localStorage.setItem("nombreSesion", trimmed);
+    }
+
+    // Actualizar etiqueta de sesión
     if (elements.sessionLabel) {
-        elements.sessionLabel.textContent = isValid ? nombre.trim() : "Sin sesión";
+        elements.sessionLabel.textContent = isValid ? trimmed : "Sin sesión";
 
-        // Alternar clase según si hay sesión activa
         if (isValid) {
             elements.sessionLabel.classList.add("session-active");
-            elements.sessionLabel.title = "Sesión activa: " + nombre.trim();
+            elements.sessionLabel.title = "Sesión activa: " + trimmed;
         } else {
             elements.sessionLabel.classList.remove("session-active");
             elements.sessionLabel.title = "No hay sesión activa";
         }
     }
 
-    // Actualizar estado de botones
+    // Actualizar estado de botones según validez
     if (elements.recordBtn) elements.recordBtn.disabled = !isValid;
     if (elements.stopBtn) elements.stopBtn.disabled = true;
     if (elements.deleteBtn) elements.deleteBtn.disabled = true;
@@ -209,12 +214,10 @@ function validateSessionName(nombre) {
 
     // Mostrar/ocultar warning
     if (elements.nameWarning) {
-        if (isValid) {
-            elements.nameWarning.hidden = true;
-        } else {
-            elements.nameWarning.hidden = false;
-        }
+        elements.nameWarning.hidden = isValid;
     }
+
+    return isValid;
 }
 
 // -----------------------------

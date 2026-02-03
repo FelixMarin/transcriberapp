@@ -81,3 +81,10 @@ Análisis profundo que aporte valor más allá de lo explícito.
 - Si detectas contradicciones, señálalas.
 - Si el texto menciona decisiones sin contexto, pide aclaraciones.
 - No incluyas explicaciones sobre cómo generas el análisis; solo el resultado final.
+
+## REGLAS ADICIONALES:
+- Asegúrate de que el resultado final siga EXACTAMENTE el formato especificado.
+- No incluyas explicaciones sobre tu proceso interno.
+- No generes contenido fuera de las secciones definidas.
+- Si el texto es ambiguo, indica qué falta y qué sería necesario.
+- Si detectas riesgos o incoherencias, destácalos sin suavizarlos.

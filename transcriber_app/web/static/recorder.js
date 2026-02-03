@@ -140,6 +140,44 @@ function parseMarkdown(markdown) {
     }
 }
 
+function clearTranscriptionAndResults() {
+    if (elements.transcripcionTexto) elements.transcripcionTexto.innerHTML = "";
+    if (elements.mdResult) elements.mdResult.innerHTML = "";
+    if (elements.multiResults) elements.multiResults.innerHTML = "";
+}
+
+function renderMultipleTranscriptions(transcriptionsArray) {
+    if (!elements.transcripcionTexto) return;
+
+    elements.transcripcionTexto.innerHTML = "";
+
+    transcriptionsArray.forEach((md, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "collapsible-block";
+
+        const toggle = document.createElement("button");
+        toggle.className = "collapsible-toggle";
+        toggle.innerHTML = `Transcripción ${index + 1} <span class="arrow">▶</span>`;
+        toggle.setAttribute("aria-expanded", "false");
+
+        const content = document.createElement("div");
+        content.className = "collapsible-content";
+        content.hidden = true;
+        content.innerHTML = parseMarkdown(md);
+
+        toggle.onclick = () => {
+            const expanded = toggle.getAttribute("aria-expanded") === "true";
+            toggle.setAttribute("aria-expanded", expanded ? "false" : "true");
+            content.hidden = expanded;
+            toggle.querySelector(".arrow").textContent = expanded ? "▶" : "▼";
+        };
+
+        wrapper.appendChild(toggle);
+        wrapper.appendChild(content);
+        elements.transcripcionTexto.appendChild(wrapper);
+    });
+}
+
 // -----------------------------
 // Manejo de estado del formulario
 // -----------------------------
@@ -603,7 +641,7 @@ async function loadTranscriptionOriginal() {
         if (resTxt.ok) {
             const texto = await resTxt.text();
             if (elements.transcripcionTexto) {
-                elements.transcripcionTexto.textContent = texto;
+                elements.transcripcionTexto.innerHTML = parseMarkdown(texto);
                 const transcripcionSection = document.getElementById("transcripcion");
                 if (transcripcionSection) transcripcionSection.hidden = false;
             }
@@ -637,7 +675,8 @@ async function saveToHistoryIfComplete() {
             fecha,
             duracion: lastRecordingDuration,
             grabacion: lastRecordingBlob || null,
-            transcripcion: texto,
+            // 🔥 ahora siempre guardamos como array (aunque sea una sola)
+            transcripcion: [texto],
             resumenes: { [modo]: markdown }
         });
     }
@@ -832,15 +871,25 @@ async function loadTranscriptionFromHistory(id) {
             return;
         }
 
-        // Rellenar interfaz
+        // 🔥 Limpiar todo lo anterior
+        clearTranscriptionAndResults();
+
+        // Rellenar nombre
         if (elements.nombre) elements.nombre.value = item.nombre;
+
+        // 🔥 Transcripciones: una o varias
         if (elements.transcripcionTexto) {
-            elements.transcripcionTexto.textContent = item.transcripcion;
             const transcripcionSection = document.getElementById("transcripcion");
             if (transcripcionSection) transcripcionSection.hidden = false;
+
+            if (Array.isArray(item.transcripcion)) {
+                renderMultipleTranscriptions(item.transcripcion);
+            } else {
+                elements.transcripcionTexto.innerHTML = parseMarkdown(item.transcripcion || "");
+            }
         }
 
-        // Mostrar resúmenes guardados
+        // 🔥 Resúmenes guardados (multiResults)
         if (elements.multiResults) {
             elements.multiResults.innerHTML = "";
             elements.multiResults.hidden = false;
@@ -849,11 +898,23 @@ async function loadTranscriptionFromHistory(id) {
             }
         }
 
+        // 🔥 Resultado principal según modo actual (si coincide)
+        const modoActual = elements.modo?.value || "";
+        if (modoActual && item.resumenes && item.resumenes[modoActual] && elements.mdResult) {
+            elements.mdResult.innerHTML = parseMarkdown(item.resumenes[modoActual]);
+            const resultSection = document.getElementById("result");
+            if (resultSection) resultSection.hidden = false;
+            if (elements.btnImprimirPDF) elements.btnImprimirPDF.style.display = "inline-block";
+        }
+
         // Cargar grabación si existe
         if (item.grabacion && elements.preview) {
             const url = URL.createObjectURL(item.grabacion);
             elements.preview.src = url;
             elements.preview.hidden = false;
+            disableRecordingWithTooltip();
+        } else {
+            enableRecordingAndClearTooltip();
         }
 
         lastRecordingName = item.nombre;

@@ -1,0 +1,95 @@
+# Usar imagen base oficial de Jetson con JetPack
+FROM nvcr.io/nvidia/l4t-jetpack:r36.4.0
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Madrid
+ENV CT2_CUDA_ALLOW_FALLBACK_ON_CPU=1
+ENV AV_IGNORE_CPU_FEATURES=1
+
+WORKDIR /app
+
+# 1. Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-dev \
+    python3-pip \
+    python3-venv \
+    git \
+    curl \
+    wget \
+    ca-certificates \
+    libavformat-dev \
+    libavcodec-dev \
+    libavdevice-dev \
+    libavutil-dev \
+    libavfilter-dev \
+    libswscale-dev \
+    libswresample-dev \
+    ffmpeg \
+    libsndfile1 \
+    build-essential \
+    pkg-config \
+    cython3 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Actualizar pip
+RUN python3 -m pip install --upgrade pip setuptools wheel
+
+# 3. Crear directorio para wheels
+RUN mkdir -p /tmp/wheels
+COPY wheels /tmp/wheels
+
+# 4. Instalar numpy
+RUN pip install --no-cache-dir "numpy==1.24.4"
+
+# 5. Instalar PyAV 11.0.0 desde wheel local
+RUN echo "=== Instalando PyAV 11.0.0 ===" && \
+    if [ -f "/tmp/wheels/av-11.0.0-cp310-cp310-linux_aarch64.whl" ]; then \
+        pip install --no-cache-dir /tmp/wheels/av-11.0.0-cp310-cp310-linux_aarch64.whl && \
+        python3 -c "import av; print('PyAV', av.__version__, 'instalado')"; \
+    else \
+        echo "ERROR: No se encontró av-11.0.0-cp310-cp310-linux_aarch64.whl"; \
+        exit 1; \
+    fi
+
+# 6. Instalar onnxruntime_gpu
+RUN echo "=== Instalando ONNX Runtime ===" && \
+    if [ -f "/tmp/wheels/onnxruntime_gpu-1.19.0-cp310-cp310-linux_aarch64.whl" ]; then \
+        pip install --no-cache-dir /tmp/wheels/onnxruntime_gpu-1.19.0-cp310-cp310-linux_aarch64.whl; \
+    else \
+        pip install --no-cache-dir onnxruntime-gpu==1.19.0; \
+    fi
+
+# 7. Instalar CTranslate2 4.6.3 desde tu wheel local (¡CON CUDA!)
+RUN echo "=== Instalando CTranslate2 4.6.3 CON CUDA ===" && \
+    pip install --no-cache-dir /tmp/wheels/ctranslate2-4.6.3-cp310-cp310-linux_aarch64.whl
+
+# 9. Instalar dependencias de faster-whisper
+RUN pip install --no-cache-dir \
+    tokenizers==0.15.2 \
+    huggingface-hub==0.20.3 \
+    pyyaml==6.0.3 \
+    tqdm==4.66.2 \
+    requests==2.31.0 \
+    filelock==3.13.1 \
+    typing-extensions==4.9.0
+
+# 10. Instalar faster-whisper SIN dependencias
+RUN echo "=== Instalando faster-whisper ===" && \
+    cd /tmp && \
+    git clone --depth 1 --branch v1.0.0 https://github.com/guillaumekln/faster-whisper.git && \
+    cd faster-whisper && \
+    pip install --no-cache-dir . --no-deps && \
+    cd / && rm -rf /tmp/faster-whisper
+
+# 11. Instalar scipy
+RUN pip install --no-cache-dir scipy==1.10.1
+
+# 13. Limpieza
+RUN rm -rf /root/.cache/pip /tmp/*
+
+# 14. Variables de entorno
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+ENV CUDA_VISIBLE_DEVICES=0
+
+WORKDIR /app

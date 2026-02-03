@@ -1,4 +1,5 @@
-# transcriber_app/tests/test_orchestrator_agno.py
+# transcriber_app/tests/test_orchestrator.py
+
 import os
 from transcriber_app.runner.orchestrator import Orchestrator
 
@@ -25,9 +26,12 @@ class DummyFormatter:
     def save_output(self, name, summary, mode):
         return f"{name}_{mode}.md"
 
+    def save_metrics(self, name, summary, mode):
+        return True
 
-def test_orchestrator_runs_with_agno(monkeypatch):
-    # Mock AIManager.summarize
+
+def test_orchestrator_runs(monkeypatch):
+    # Mock AIManager.summarize para devolver un texto simple
     from transcriber_app.modules.ai.ai_manager import AIManager
     monkeypatch.setattr(AIManager, "summarize", lambda text, mode: "resumen generado")
 

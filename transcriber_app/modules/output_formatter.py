@@ -1,4 +1,5 @@
 # transcriber_app/modules/output_formatter.py
+
 import os
 import json
 from transcriber_app.modules.logging.logging_config import setup_logging
@@ -10,9 +11,8 @@ logger = setup_logging("transcribeapp")
 class OutputFormatter:
     def save_output(self, base_name: str, content, mode: str) -> str:
         """
-        Guarda la salida del agente. `content` puede ser:
-        - RunOutput (Agno)
-        - str (modo legacy)
+        Guarda la salida del agente.
+        `content` ahora siempre es texto (str) o un objeto con .text
         """
         logger.info(f"[OUTPUT FORMATTER] Guardando salida para: {base_name} con modo: {mode}")
         os.makedirs("outputs", exist_ok=True)
@@ -20,9 +20,9 @@ class OutputFormatter:
         output_filename = f"{base_name}_{mode}.md"
         output_path = os.path.join("outputs", output_filename)
 
-        # Normalizar: si es RunOutput → usar content.content
-        if hasattr(content, "content"):
-            text = content.content
+        # Normalizar: si el objeto tiene .text → usarlo
+        if hasattr(content, "text"):
+            text = content.text
         else:
             text = str(content)
 
@@ -43,8 +43,11 @@ class OutputFormatter:
 
     def save_metrics(self, base_name: str, result, mode: str) -> str:
         """
-        Guarda las métricas del agente en outputs/metrics/*.json
-        result es un RunOutput de Agno.
+        Guarda métricas del agente en outputs/metrics/*.json.
+        `result` puede ser:
+        - None
+        - un dict con métricas
+        - un objeto con atributos opcionales
         """
         logger.info(f"[OUTPUT FORMATTER] Guardando métricas para: {base_name} con modo: {mode}")
 
@@ -53,22 +56,21 @@ class OutputFormatter:
         metrics_filename = f"{base_name}_{mode}.json"
         metrics_path = os.path.join("outputs/metrics", metrics_filename)
 
-        # Construir diccionario de métricas
-        data = {
-            "run_id": getattr(result, "run_id", None),
-            "session_id": getattr(result, "session_id", None),
-            "agent_id": getattr(result, "agent_id", None),
-            "model": getattr(result, "model", None),
-            "provider": getattr(result, "model_provider", None),
-            "input_preview": getattr(getattr(result, "input", None), "input_content", None),
-            "output_preview": getattr(result, "content", None),
-            "metrics": {
-                "input_tokens": getattr(getattr(result, "metrics", None), "input_tokens", None),
-                "output_tokens": getattr(getattr(result, "metrics", None), "output_tokens", None),
-                "total_tokens": getattr(getattr(result, "metrics", None), "total_tokens", None),
-                "duration": getattr(getattr(result, "metrics", None), "duration", None),
+        # Si no hay métricas → guardar un JSON mínimo
+        if result is None:
+            data = {"info": "No hay métricas disponibles"}
+        elif isinstance(result, dict):
+            data = result
+        else:
+            # Extraer atributos opcionales si existen
+            data = {
+                "model": getattr(result, "model_name", None),
+                "temperature": getattr(result, "temperature", None),
+                "top_p": getattr(result, "top_p", None),
+                "top_k": getattr(result, "top_k", None),
+                "max_output_tokens": getattr(result, "max_output_tokens", None),
+                "info": "Métricas básicas generadas"
             }
-        }
 
         with open(metrics_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)

@@ -3,6 +3,7 @@
 # ============================================
 #  TranscriberApp - Script de arranque
 #  Ejecuta la aplicación con el entorno virtual
+#  Backend expuesto en 0.0.0.0 para Caddy
 # ============================================
 
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -26,12 +27,11 @@ fi
 source "$VENV_DIR/bin/activate"
 
 echo "🚀 Iniciando TranscriberApp..."
-echo "🌐 Servidor disponible en: http://127.0.0.1:9000"
+echo "🌐 Backend disponible en: http://0.0.0.0:9000"
+echo "🔐 Acceso público vía Caddy: https://192.168.0.105"
 
-# Ejecutar FastAPI con Uvicorn usando el mismo comando que funciona
+# Ejecutar FastAPI con Uvicorn
 exec "$PYTHON_BIN" -m uvicorn "$MAIN_APP" \
-  --host 127.0.0.1 \
+  --host 0.0.0.0 \
   --port 9000 \
   --log-level debug
-
-

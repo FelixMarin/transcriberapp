@@ -1,10 +1,7 @@
 # transcriber_app/modules/ai/ai_manager.py
 
 from transcriber_app.modules.logging.logging_config import setup_logging
-
-# Importar el modelo Gemini (que internamente gestiona sus agentes)
 from transcriber_app.modules.ai.gemini.client import GeminiModel
-
 
 # Logging
 logger = setup_logging("transcribeapp")
@@ -12,47 +9,20 @@ logger = setup_logging("transcribeapp")
 
 def log_agent_result(result):
     """
-    Registra la información más relevante del resultado devuelto por Agno Agent.run().
-    Maneja correctamente RunInput, que no es un dict.
+    Registra información básica del resultado de un agente.
+    solo registramos texto o atributos simples.
     """
 
     try:
-        # Identificadores clave
-        run_id = getattr(result, "run_id", None)
-        session_id = getattr(result, "session_id", None)
-        agent_id = getattr(result, "agent_id", None)
+        # Si el resultado es un objeto con .text
+        if hasattr(result, "text"):
+            output = result.text
+        else:
+            output = str(result)
 
-        # Modelo
-        model = getattr(result, "model", None)
-        provider = getattr(result, "model_provider", None)
+        preview = output[:200].replace("\n", " ")
 
-        # Métricas
-        metrics = getattr(result, "metrics", None)
-        tokens_in = getattr(metrics, "input_tokens", None) if metrics else None
-        tokens_out = getattr(metrics, "output_tokens", None) if metrics else None
-        duration = getattr(metrics, "duration", None) if metrics else None
-
-        # INPUT: RunInput no es dict → acceder por atributo
-        input_obj = getattr(result, "input", None)
-        input_content = getattr(input_obj, "input_content", None)
-
-        # OUTPUT
-        output_content = getattr(result, "content", None)
-
-        # Previews
-        input_preview = (input_content or "")[:80]
-        output_preview = (output_content or "")[:120]
-
-        # Log compacto
-        logger.info(
-            "[AGENT RESULT] run_id=%s session_id=%s agent_id=%s model=%s provider=%s "
-            "tokens_in=%s tokens_out=%s duration=%.3fs",
-            run_id, session_id, agent_id, model, provider,
-            tokens_in, tokens_out, duration or 0.0
-        )
-
-        logger.info("[AGENT INPUT]  %s...", input_preview)
-        logger.info("[AGENT OUTPUT] %s...", output_preview)
+        logger.info("[AGENT RESULT] %s...", preview)
 
     except Exception as e:
         logger.error(f"[AGENT RESULT] Error registrando resultado: {e}")
@@ -84,17 +54,31 @@ class AIManager:
         Ejecuta un agente del modelo seleccionado.
         """
         model = AIManager.get_model(model_name)
-        return model.run_agent(mode, text)
+        result = model.run_agent(mode, text)
+
+        # Log básico
+        log_agent_result(result)
+
+        return result
 
     @staticmethod
     def summarize_stream(text: str, mode: str = "default", model_name: str = "gemini"):
         """
         Versión en streaming del agente.
+        el streaming se simula dividiendo el texto.
         """
         model = AIManager.get_model(model_name)
+        result = model.run_agent(mode, text)
 
-        for chunk in model.run_agent(mode, text, stream=True):
-            yield chunk
+        if hasattr(result, "text"):
+            full_text = result.text
+        else:
+            full_text = str(result)
+
+        # Emitir en chunks de 200 caracteres
+        chunk_size = 200
+        for i in range(0, len(full_text), chunk_size):
+            yield full_text[i:i + chunk_size]
 
     @staticmethod
     def get_agent(mode: str, model_name: str = "gemini"):

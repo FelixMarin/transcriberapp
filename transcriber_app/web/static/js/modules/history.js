@@ -4,7 +4,7 @@
  */
 
 import { addProcessedMode, getProcessedModes, resetProcessedModes, setCurrentSessionId, setLastRecordingBlob } from "./appState.js";
-import { addMessage, clearChatHistory } from "./chat.js";
+import { addMessage, clearChatHistory, closeChatPanel } from "./chat.js";
 import { elements } from "./domElements.js";
 import { getFormValues, setFormName, validateSessionName } from "./form.js";
 import { deleteTranscription, getAllTranscriptions, getTranscriptionById } from "./historyStorage.js";
@@ -18,12 +18,25 @@ async function toggleHistoryPanel() {
     if (!elements.historyPanel) return;
 
     const isOpening = !elements.historyPanel.classList.contains("open");
-    elements.historyPanel.classList.toggle("open");
-    document.body.classList.toggle("history-open", isOpening);
 
     if (isOpening) {
+        // Cerrar chat si se va a abrir el historial
+        closeChatPanel();
         await loadHistoryItems();
     }
+
+    elements.historyPanel.classList.toggle("open");
+    document.body.classList.toggle("history-open", isOpening);
+}
+
+/**
+ * Cierra el panel de historial
+ */
+function closeHistoryPanel() {
+    if (elements.historyPanel) {
+        elements.historyPanel.classList.remove("open");
+    }
+    document.body.classList.remove("history-open");
 }
 
 /**
@@ -340,7 +353,7 @@ function printResultContent(mode, content) {
 }
 
 export {
-    addResultBox, loadHistoryItems,
+    addResultBox, closeHistoryPanel, loadHistoryItems,
     loadTranscriptionFromHistory,
     renderMultipleTranscriptions, toggleHistoryPanel
 };

@@ -6,6 +6,7 @@
 import { chatStream } from "./api.js";
 import { getCurrentSessionId } from "./appState.js";
 import { elements } from "./domElements.js";
+import { closeHistoryPanel } from "./history.js";
 import { updateChatHistory } from "./historyStorage.js";
 import { hideOverlay, showOverlay } from "./ui.js";
 import { formatAsHTML, parseMarkdown } from "./utils.js";
@@ -145,6 +146,12 @@ function toggleChatPanel() {
     if (!elements.chatPanel || !elements.chatToggle) return;
 
     const isOpening = !elements.chatPanel.classList.contains("open");
+
+    if (isOpening) {
+        // Cerrar historial si se va a abrir el chat
+        closeHistoryPanel();
+    }
+
     elements.chatPanel.classList.toggle("open");
     elements.chatToggle.classList.toggle("hidden");
     document.body.classList.toggle("chat-open", isOpening);

@@ -106,8 +106,23 @@ async function updateChatHistory(id, chatHistory) {
     }
 }
 
+/**
+ * Elimina una transcripción de la base de datos
+ */
+async function deleteTranscription(id) {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+
+    return new Promise((resolve, reject) => {
+        const req = store.delete(id);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+    });
+}
+
 export {
-    getAllTranscriptions,
+    deleteTranscription, getAllTranscriptions,
     getLatestTranscriptionByName,
     getTranscriptionById,
     saveTranscription,

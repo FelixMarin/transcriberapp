@@ -3,7 +3,8 @@
  * Gestiona el panel lateral de historial de transcripciones
  */
 
-import { addProcessedMode, getProcessedModes, resetProcessedModes, setLastRecordingBlob } from "./appState.js";
+import { addProcessedMode, getProcessedModes, resetProcessedModes, setCurrentSessionId, setLastRecordingBlob } from "./appState.js";
+import { addMessage, clearChatHistory } from "./chat.js";
 import { elements } from "./domElements.js";
 import { getFormValues, setFormName, validateSessionName } from "./form.js";
 import { getAllTranscriptions, getTranscriptionById } from "./historyStorage.js";
@@ -38,10 +39,29 @@ async function loadHistoryItems() {
             .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
             .forEach(item => {
                 const li = document.createElement("li");
+                li.className = "history-item flex justify-between items-center p-2 hover:bg-gray-100 cursor-pointer rounded mb-1";
+                li.style = "display: flex; justify-content: space-between; align-items: center; padding: 8px; cursor: pointer; border-radius: 4px; border-bottom: 1px solid #eee;";
+
+                const textSpan = document.createElement("span");
                 const fecha = new Date(item.fecha).toLocaleString();
-                li.textContent = `${item.nombre} (${fecha})`;
+                textSpan.textContent = `${item.nombre} (${fecha})`;
+                textSpan.style = "flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;";
+                textSpan.onclick = () => loadTranscriptionFromHistory(item.id);
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.innerHTML = "🗑️";
+                deleteBtn.title = "Eliminar transcripción";
+                deleteBtn.className = "btn-delete-history ml-2 opacity-50 hover:opacity-100";
+                deleteBtn.style = "background: none; border: none; cursor: pointer; padding: 4px; font-size: 1.1em;";
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    handleDeleteItem(item.id, item.nombre);
+                };
+
+                li.appendChild(textSpan);
+                li.appendChild(deleteBtn);
+
                 li.tabIndex = 0;
-                li.onclick = () => loadTranscriptionFromHistory(item.id);
                 li.onkeypress = (e) => {
                     if (e.key === "Enter" || e.key === " ") {
                         loadTranscriptionFromHistory(item.id);
@@ -55,6 +75,28 @@ async function loadHistoryItems() {
         if (elements.historyList) {
             elements.historyList.innerHTML = "<li>Error cargando historial</li>";
         }
+    }
+}
+
+/**
+ * Maneja la eliminación de un item del historial
+ */
+async function handleDeleteItem(id, nombre) {
+    if (!confirm(`¿Estás seguro de que quieres eliminar la transcripción "${nombre}"? Esta acción no se puede deshacer.`)) {
+        return;
+    }
+
+    try {
+        await deleteTranscription(id);
+        console.log(`[HISTORY] Item eliminado: ${id}`);
+
+        // Si es la sesión actual, limpiar la UI (opcional pero recomendado)
+        // Podríamos importar getCurrentSessionId aquí si quisiéramos ser más finos.
+
+        await loadHistoryItems(); // Refrescar lista
+    } catch (error) {
+        console.error("Error eliminando item:", error);
+        alert("No se pudo eliminar el item del historial.");
     }
 }
 

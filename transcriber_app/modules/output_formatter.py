@@ -18,21 +18,21 @@ class OutputFormatter:
                 f.write(content)
             logger.info(f"[OUTPUT FORMATTER] Archivo guardado en: {output_path}")
         else:
-            logger.info(f"[OUTPUT FORMATTER] Saltado guardado en disco por configuración")
+            logger.info("[OUTPUT FORMATTER] Saltado guardado en disco por configuración")
 
         return output_path
 
     def save_transcription(self, base_name: str, text: str, enforce_save: bool = True) -> str:
         logger.info(f"[OUTPUT FORMATTER] Guardando transcripción para: {base_name} (enforce_save={enforce_save})")
         path = f"transcripts/{base_name}.txt"
-        
+
         if enforce_save:
             os.makedirs("transcripts", exist_ok=True)
             with open(path, "w", encoding="utf-8") as f:
                 f.write(text)
             logger.info(f"[OUTPUT FORMATTER] Transcripción guardada en: {path}")
         else:
-            logger.info(f"[OUTPUT FORMATTER] Saltado guardado en disco por configuración")
+            logger.info("[OUTPUT FORMATTER] Saltado guardado en disco por configuración")
 
         return path
 

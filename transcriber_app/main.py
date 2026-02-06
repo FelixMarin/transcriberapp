@@ -99,7 +99,7 @@ def main():
             output_file, text, summary = orchestrator.run_audio(path, mode)
         else:
             output_file, text, summary = orchestrator.run_text(path, mode)
-        
+
         output = f"✅ Transcripción guardada: {text[:100]}...\n✅ Resumen guardado en: {output_file}"
 
     except ValueError as e:

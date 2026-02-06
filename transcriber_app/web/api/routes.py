@@ -74,10 +74,10 @@ async def upload_audio(
 def get_status(job_id: str):
     logger.info(f"[API ROUTE] Consultando estado del job: {job_id}")
     job_data = JOB_STATUS.get(job_id, "unknown")
-    
+
     if isinstance(job_data, dict):
         return job_data
-    
+
     return {"job_id": job_id, "status": job_data}
 
 
@@ -138,7 +138,7 @@ async def process_existing(
 
     # 1. Resumir con Gemini
     summary_output = AIManager.summarize(text, modo)
-    
+
     # 2. Guardar métricas (SIEMPRE se guardan)
     orchestrator.formatter.save_metrics(nombre, summary_output, modo)
 

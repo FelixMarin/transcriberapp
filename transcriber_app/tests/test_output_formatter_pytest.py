@@ -23,20 +23,20 @@ def test_save_metrics(tmp_path, monkeypatch):
     import json
     from pathlib import Path
     monkeypatch.chdir(tmp_path)
-    
+
     fmt = OutputFormatter()
     name = "metrics_test"
     summary = "# Summary\n- point 1"
     mode = "tecnico"
-    
+
     # Asegurar que el directorio existe (el formateador lo hace, pero aquí testeamos en tmp_path)
     os.makedirs("outputs/metrics", exist_ok=True)
-    
+
     fmt.save_metrics(name, summary, mode)
-    
+
     metrics_path = Path("outputs/metrics") / f"{name}_{mode}.json"
     assert metrics_path.exists()
-    
+
     with open(metrics_path, "r") as f:
         data = json.load(f)
         assert data["name"] == name

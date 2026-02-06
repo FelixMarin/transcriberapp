@@ -9,11 +9,11 @@ client = TestClient(app)
 
 def test_chat_stream_endpoint(monkeypatch):
     from transcriber_app.modules.ai.ai_manager import AIManager
-    
+
     # Mock agent with run method
     mock_agent = MagicMock()
     mock_agent.run.return_value = iter(["hola", " mundo"])
-    
+
     monkeypatch.setattr(AIManager, "get_agent", lambda mode: mock_agent)
 
     response = client.post(

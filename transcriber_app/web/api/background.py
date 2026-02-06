@@ -5,7 +5,6 @@ from transcriber_app.modules.output_formatter import OutputFormatter
 from transcriber_app.modules.audio_receiver import AudioReceiver
 from transcriber_app.modules.ai.groq.transcriber import GroqTranscriber
 from transcriber_app.modules.logging.logging_config import setup_logging
-from .emailer import send_email_with_attachment
 from pathlib import Path
 import os
 

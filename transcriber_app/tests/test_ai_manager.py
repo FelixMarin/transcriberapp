@@ -20,7 +20,7 @@ def test_ai_manager_fallback_to_default():
 def test_ai_manager_summarize_stream(monkeypatch):
     gemini = AIManager.get_model("gemini")
     monkeypatch.setattr(gemini, "run_agent", lambda mode, text: "resultado stream")
-    
+
     gen = AIManager.summarize_stream("texto", "default")
     result = "".join(list(gen))
     assert result == "resultado stream"

@@ -28,8 +28,7 @@ function hideOverlay() {
  */
 function clearTranscriptionAndResults() {
     if (elements.transcripcionTexto) elements.transcripcionTexto.innerHTML = "";
-    if (elements.mdResult) elements.mdResult.innerHTML = "";
-    if (elements.multiResults) elements.multiResults.innerHTML = "";
+    if (elements.resultContent) elements.resultContent.innerHTML = "";
 }
 
 /**

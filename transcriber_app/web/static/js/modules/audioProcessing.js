@@ -13,8 +13,6 @@ import { elements } from "./domElements.js";
 import {
     hideOverlay,
     setStatusText,
-    showPrintButton,
-    toggleResultSection,
     toggleTranscriptionSection
 } from "./ui.js";
 import { getStatusMessage, parseMarkdown } from "./utils.js";
@@ -72,11 +70,7 @@ async function handleJobCompletion(data, onComplete) {
     }
 
     // Renderizar resultado si existe
-    if (md && elements.mdResult) {
-        elements.mdResult.innerHTML = parseMarkdown(md);
-        toggleResultSection(true);
-        showPrintButton();
-    }
+    // (Renderizado de resultado movido a addResultBox en el callback final)
 
     // Cargar transcripción original
     const transcriptionText = await loadTranscriptionFile(nombre);

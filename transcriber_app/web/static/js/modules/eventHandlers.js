@@ -30,7 +30,7 @@ import {
     sendMessage,
     toggleChatPanel
 } from "./chat.js";
-import { elements, getModalElements, getSectionElements } from "./domElements.js";
+import { elements, getModalElements } from "./domElements.js";
 import {
     deleteRecording,
     displayAudioPreview,
@@ -55,7 +55,7 @@ import {
     updateResetButtonState,
     updateSendButtonState
 } from "./ui.js";
-import { generateId, parseMarkdown } from "./utils.js";
+import { generateId } from "./utils.js";
 
 /**
  * Guarda en historial si está completo
@@ -175,22 +175,8 @@ async function handleSendAudio() {
 
         if (result.success) {
             // Actualizar UI principal
-            if (elements.mdResult) {
-                elements.mdResult.innerHTML = parseMarkdown(result.content);
-                const { resultSection } = getSectionElements();
-                if (resultSection) {
-                    resultSection.hidden = false;
-                    // Auto-expandir si tenemos la función (que ahora tenemos)
-                    const toggle = resultSection.querySelector(".collapsible-toggle");
-                    if (toggle) {
-                        toggle.setAttribute("aria-expanded", "true");
-                        const arrow = toggle.querySelector(".arrow");
-                        if (arrow) arrow.textContent = "▼";
-                        const content = resultSection.querySelector(".collapsible-content");
-                        if (content) content.hidden = false;
-                    }
-                }
-            }
+            // Actualizar UI principal
+            // (La visibilidad ahora se gestiona dentro de addResultBox)
 
             // Añadir a la lista de resultados múltiples
             addResultBox(result.mode, result.content);
@@ -233,6 +219,10 @@ async function handleSendAudio() {
             // 'data' ahora trae 'markdown' asegurado por el fix en audioProcessing.js
             const mdContent = data?.markdown || data?.resultado || "";
             const currentMode = elements.modo?.value || "default";
+
+            // Renderizar inmediatamente
+            addResultBox(currentMode, mdContent);
+            addProcessedMode(currentMode);
 
             await saveToHistoryIfComplete(mdContent, currentMode);
         }

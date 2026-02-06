@@ -92,22 +92,30 @@ async function loadTranscriptionFromHistory(id) {
             }
         }
 
-        // Resúmenes guardados (multiResults)
-        if (elements.multiResults) {
-            elements.multiResults.innerHTML = "";
-            elements.multiResults.hidden = false;
-            for (const modo in item.resumenes) {
-                addResultBox(modo, item.resumenes[modo]);
+        // Limpiar y preparar contenedor de resultados
+        if (elements.resultContent) {
+            elements.resultContent.innerHTML = "";
+            const resultSection = document.getElementById("result");
+            if (resultSection) {
+                resultSection.hidden = false;
+                // Auto-expandir
+                const toggle = resultSection.querySelector(".collapsible-toggle");
+                if (toggle) toggle.setAttribute("aria-expanded", "true");
             }
         }
 
-        // Resultado principal según modo actual (si coincide)
-        const modoActual = document.getElementById("modo")?.value || "";
-        if (modoActual && item.resumenes && item.resumenes[modoActual] && elements.mdResult) {
-            elements.mdResult.innerHTML = parseMarkdown(item.resumenes[modoActual]);
-            const resultSection = document.getElementById("result");
-            if (resultSection) resultSection.hidden = false;
-            if (elements.btnImprimirPDF) elements.btnImprimirPDF.style.display = "inline-block";
+        // Cargar todos los resúmenes disponibles
+        if (item.resumenes) {
+            // Ordenar: primero default si existe, luego el resto
+            const modes = Object.keys(item.resumenes).sort((a, b) => {
+                if (a === 'default') return -1;
+                if (b === 'default') return 1;
+                return a.localeCompare(b);
+            });
+
+            modes.forEach(mode => {
+                addResultBox(mode, item.resumenes[mode]);
+            });
         }
 
         // Cargar grabación si existe
@@ -182,19 +190,98 @@ function renderMultipleTranscriptions(transcriptionsArray) {
 /**
  * Añade una caja de resultado (resumen)
  */
+/**
+ * Añade una caja de resultado al contenedor principal
+ */
 function addResultBox(mode, content) {
-    if (!elements.multiResults) return;
+    if (!elements.resultContent) return;
 
-    // Asegurar que el contenedor sea visible
-    elements.multiResults.hidden = false;
+    // Asegurar que la sección padre (#result) sea visible y esté expandida
+    const resultSection = document.getElementById("result");
+    if (resultSection) {
+        resultSection.hidden = false;
+        const toggle = resultSection.querySelector(".collapsible-toggle");
+        if (toggle) {
+            toggle.setAttribute("aria-expanded", "true");
+            const arrow = toggle.querySelector(".arrow");
+            if (arrow) arrow.textContent = "▼";
+        }
+    }
+
+    // Crear ID único para evitar colisiones
+    const uniqueId = `result-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const contentId = `content-${uniqueId}`;
 
     const html = `
-    <details class="result-box" open>
-        <summary>${mode.toUpperCase()}</summary>
-        <div class="markdown-body">${parseMarkdown(content)}</div>
-    </details>
+    <div class="result-box mb-4 pb-4 border-b" id="${uniqueId}">
+        <div class="result-header flex justify-between items-center mb-2" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <button class="collapsible-toggle mode-toggle" aria-expanded="true" aria-controls="${contentId}" style="background: none; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; padding: 0; text-transform: uppercase; font-size: 1.1em; color: #444;">
+                <span class="arrow">▼</span> ${mode}
+            </button>
+            <button class="btn btn-sm btn-print-item" aria-label="Imprimir ${mode}" style="padding: 4px 8px; font-size: 0.9em; cursor: pointer;">
+                🖨️ PDF
+            </button>
+        </div>
+        <div id="${contentId}" class="collapsible-content markdown-body" style="margin-top: 10px;">
+            ${parseMarkdown(content)}
+        </div>
+    </div>
     `;
-    elements.multiResults.insertAdjacentHTML("beforeend", html);
+
+    elements.resultContent.insertAdjacentHTML("beforeend", html);
+
+    const container = document.getElementById(uniqueId);
+    if (container) {
+        // Asignar evento al botón de imprimir
+        const printBtn = container.querySelector(".btn-print-item");
+        if (printBtn) {
+            printBtn.onclick = (e) => {
+                e.stopPropagation(); // Evitar que el clic se propague al toggle si estuvieran anidados
+                printResultContent(mode, content);
+            };
+        }
+
+        // Asignar evento de colapso al título
+        const toggleBtn = container.querySelector(".mode-toggle");
+        const contentDiv = document.getElementById(contentId);
+
+        if (toggleBtn && contentDiv) {
+            toggleBtn.onclick = () => {
+                const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
+                toggleBtn.setAttribute("aria-expanded", !isExpanded);
+                contentDiv.hidden = isExpanded;
+                const arrow = toggleBtn.querySelector(".arrow");
+                if (arrow) arrow.textContent = isExpanded ? "▶" : "▼";
+            };
+        }
+    }
+}
+
+/**
+ * Imprime un contenido específico
+ */
+function printResultContent(mode, content) {
+    const ventana = window.open("", "_blank");
+    ventana.document.write(`
+        <html>
+            <head>
+                <title>Resultado: ${mode}</title>
+                <style>
+                    body { font-family: sans-serif; padding: 20px; }
+                    h1, h2, h3 { color: #333; }
+                    p, li { line-height: 1.6; }
+                    img { max-width: 100%; }
+                    pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
+                </style>
+            </head>
+            <body>
+                <h1>Resultado: ${mode.toUpperCase()}</h1>
+                ${parseMarkdown(content)}
+            </body>
+        </html>
+    `);
+    ventana.document.close();
+    setTimeout(() => ventana.print(), 500);
 }
 
 export {

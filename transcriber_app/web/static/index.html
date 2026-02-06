@@ -140,17 +140,13 @@
                 </button>
             </h2>
             <div id="resultContent" class="collapsible-content">
-                <button id="btnImprimirPDF" class="btn btn-print" aria-label="Imprimir resultado en PDF">
-                    <span aria-hidden="true">🖨️</span> Imprimir PDF
-                </button>
-                <div id="mdResult" class="markdown-body" tabindex="0"></div>
+                <!-- Se llenará dinámicamente -->
             </div>
         </section>
 
         <!-- Resultados múltiples -->
-        <section id="multiResults" class="card" hidden aria-label="Resultados adicionales">
-            <!-- Se añadirán dinámicamente -->
-        </section>
+        <!-- Resultados múltiples (Desuso, integrado en #result) -->
+        <div id="multiResults" hidden></div>
     </main>
 
     <!-- Panel lateral de historial -->
@@ -226,6 +222,6 @@
 
     <!-- Scripts al final para mejor rendimiento -->
     <script src="/static/lib/marked.min.js"></script>
-    <script type="module" src="/static/js/main.js?v=04"></script>
+    <script type="module" src="/static/js/main.js?v=06"></script>
 </body>
 </html>

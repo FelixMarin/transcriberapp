@@ -8,7 +8,8 @@ logger = setup_logging("transcribeapp")
 
 class OutputFormatter:
     def save_output(self, base_name: str, content: str, mode: str, enforce_save: bool = True) -> str:
-        logger.info(f"[OUTPUT FORMATTER] Guardando salida para: {base_name} con modo: {mode} (enforce_save={enforce_save})")
+        logger.info(f"[OUTPUT FORMATTER] Guardando salida para: {base_name} "
+                    f"con modo: {mode} (enforce_save={enforce_save})")
         output_filename = f"{base_name}_{mode}.md"
         output_path = os.path.join("outputs", output_filename)
 

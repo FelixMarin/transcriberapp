@@ -1,0 +1,43 @@
+# Ignorar entornos virtuales
+venv/
+venv_transcriber/
+.env
+
+# Ignorar cachés
+__pycache__/
+*.pyc
+
+# Ignorar audios
+*.wav
+*.mp3
+*.m4a
+audios/
+audio/
+uploads/
+
+# Ignorar modelos grandes
+models/
+model/
+*.bin
+*.onnx
+*.gguf
+
+# Ignorar logs
+logs/
+*.log
+
+# Ignorar archivos de usuario
+*.md
+
+# Ignorar Git
+.git/
+.gitignore
+
+# Ignorar vscode
+.vscode/
+
+# Ignorar Docker
+docker-compose.yml
+Dockerfile.base
+
+wheels/

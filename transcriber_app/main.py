@@ -1,15 +1,12 @@
 # transcriber_app/main.py
 import os
 import sys
-from dotenv import load_dotenv
 
 from transcriber_app.modules.audio_receiver import AudioReceiver
-from transcriber_app.modules.transcriber import Transcriber
-from transcriber_app.modules.gemini_client import GeminiClient
-from transcriber_app.modules.summarizer import Summarizer
+from transcriber_app.modules.transcriber_cli import Transcriber
 from transcriber_app.modules.output_formatter import OutputFormatter
 from transcriber_app.runner.orchestrator import Orchestrator
-from transcriber_app.modules.prompt_factory import PromptFactory
+from transcriber_app.config import AVAILABLE_MODES
 
 
 def mostrar_ayuda():
@@ -26,7 +23,7 @@ def mostrar_ayuda():
     print("  modo         Tipo de resumen a generar\n")
 
     print("MODOS DISPONIBLES:")
-    for m in PromptFactory.AVAILABLE_MODES:
+    for m in AVAILABLE_MODES:
         print(f"  - {m}")
     print()
 
@@ -45,7 +42,6 @@ def mostrar_ayuda():
 
 
 def main():
-    load_dotenv()
 
     # ============================
     #   VALIDACIÓN DE ARGUMENTOS
@@ -58,7 +54,7 @@ def main():
     base_name = sys.argv[2]
     mode = sys.argv[3].lower()
 
-    if mode not in PromptFactory.AVAILABLE_MODES:
+    if mode not in AVAILABLE_MODES:
         print(f"❌ Modo no válido: {mode}\n")
         mostrar_ayuda()
         return
@@ -88,27 +84,27 @@ def main():
     # ============================
     #   INICIALIZAR PIPELINE
     # ============================
-    idioma_salida = "español"
-
     receiver = AudioReceiver()
     transcriber = Transcriber()
-    gemini = GeminiClient(
-        api_key=os.getenv("GEMINI_API_KEY"),
-        model="gemini-2.5-flash-lite",
-        target_lang=idioma_salida
-    )
-    summarizer = Summarizer(gemini)
     formatter = OutputFormatter()
 
-    orchestrator = Orchestrator(receiver, transcriber, summarizer, formatter)
+    # Nuevo Orchestrator sin summarizer
+    orchestrator = Orchestrator(receiver, transcriber, formatter)
 
     # ============================
     #   EJECUTAR PIPELINE
     # ============================
-    if input_type == "audio":
-        output = orchestrator.run_audio(path, mode)
-    else:
-        output = orchestrator.run_text(path, mode)
+    try:
+        if input_type == "audio":
+            output_file, text, summary = orchestrator.run_audio(path, mode)
+        else:
+            output_file, text, summary = orchestrator.run_text(path, mode)
+
+        output = f"✅ Transcripción guardada: {text[:100]}...\n✅ Resumen guardado en: {output_file}"
+
+    except ValueError as e:
+        print(f"[BAD_AUDIO] {e}")
+        sys.exit(3)
 
     print(output)
 

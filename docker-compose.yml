@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  transcriberapp:
+    container_name: transcriberapp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: transcriberapp-container
+    restart: unless-stopped
+
+    network_mode: host
+
+    volumes:
+      - .:/app
+      - ./audios:/app/audios
+      - ./transcripts:/app/transcripts
+      - ./outputs:/app/outputs
+
+    environment:
+      - TZ=Europe/Madrid
+      - PYTHONUNBUFFERED=1
+      - GROQ_API_KEY=${GROQ_API_KEY}
+
+    command: >
+      uvicorn transcriber_app.web.web_app:app
+      --host 0.0.0.0
+      --port 9000
+      --log-level debug
+      --reload

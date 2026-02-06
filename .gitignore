@@ -7,6 +7,8 @@ venv_transcriber/
 .vscode/settings.json
 .vscode/launch.json
 .vscode/tasks.json
+.vscode/extensions.json
+.vscode/travis-settings.json
 
 # logs
 transcriber_app/logs/*

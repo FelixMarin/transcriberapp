@@ -1,33 +1,25 @@
-import sys
-import types
 import pytest
-import importlib
+from unittest.mock import MagicMock, patch
+from transcriber_app.modules.transcriber_cli import Transcriber
 
 
-@pytest.fixture(autouse=True)
-def mock_whisper(monkeypatch):
-    # Mock the whisper module and its load_model function BEFORE importing transcriber
-    whisper = types.SimpleNamespace()
+@pytest.fixture
+def mock_groq_api():
+    with patch("transcriber_app.modules.ai.groq.transcriber.requests.post") as mock_post:
+        # Mocking the response from Groq
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"text": "simulated transcription from groq"}
+        mock_post.return_value = mock_response
 
-    def fake_load_model(size, device=None):
-        class Model:
-            def transcribe(self, path, language=None, fp16=False):
-                return {"text": f"simulated transcription for {path}"}
-        return Model()
-
-    whisper.load_model = fake_load_model
-    monkeypatch.setitem(sys.modules, "whisper", whisper)
-
-    # Import transcriber module now so it picks the mocked whisper
-    trans_mod = importlib.import_module("transcriber_app.modules.transcriber")
-    monkeypatch.setattr(trans_mod, "ensure_wav", lambda p: p)
-
-    yield
+        # Mocking ffmpeg call and file operations
+        with patch("transcriber_app.modules.ai.groq.transcriber.ensure_wav", return_value="fake.wav"):
+            with patch("builtins.open", MagicMock()):
+                with patch("transcriber_app.modules.ai.groq.transcriber.os.unlink", MagicMock()):
+                    yield mock_post
 
 
-def test_transcribe_returns_text():
-    # Import inside the test to ensure fixture mocking happened first
-    Transcriber = importlib.import_module("transcriber_app.modules.transcriber").Transcriber
+def test_transcribe_returns_text(mock_groq_api):
     t = Transcriber()
     out = t.transcribe("audios/ejemplo.mp3")
-    assert "simulated transcription" in out
+    assert "simulated transcription from groq" in out

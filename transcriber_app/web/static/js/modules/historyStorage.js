@@ -83,10 +83,34 @@ async function getLatestTranscriptionByName(name) {
     return matches.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
 }
 
+/**
+ * Actualiza el historial de chat de una sesión
+ */
+async function updateChatHistory(id, chatHistory) {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+
+    const record = await new Promise(resolve => {
+        const req = store.get(id);
+        req.onsuccess = () => resolve(req.result);
+    });
+
+    if (record) {
+        record.chat = chatHistory;
+        return new Promise((resolve, reject) => {
+            const req = store.put(record);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+}
+
 export {
     getAllTranscriptions,
     getLatestTranscriptionByName,
     getTranscriptionById,
-    saveTranscription
+    saveTranscription,
+    updateChatHistory
 };
 

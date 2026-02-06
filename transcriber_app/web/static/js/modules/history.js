@@ -74,11 +74,22 @@ async function loadTranscriptionFromHistory(id) {
 
         // Resetear modos procesados y cargar los del historial
         resetProcessedModes();
+        setCurrentSessionId(id);
+
         const modesDelHistorial = Object.keys(item.resumenes || {});
         modesDelHistorial.forEach(modo => addProcessedMode(modo));
 
         // Rellenar nombre
         setFormName(item.nombre);
+
+        // Limpiar chat y restaurar si existe
+        clearChatHistory();
+        if (elements.chatMessages) elements.chatMessages.innerHTML = "";
+        if (item.chat && Array.isArray(item.chat)) {
+            item.chat.forEach(msg => {
+                addMessage(msg.content, msg.role === "user" ? "user" : "ai");
+            });
+        }
 
         // Transcripciones: una o varias
         if (elements.transcripcionTexto) {

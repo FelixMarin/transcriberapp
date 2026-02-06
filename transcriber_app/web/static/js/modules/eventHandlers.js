@@ -120,7 +120,8 @@ async function saveToHistoryIfComplete(providedMarkdown, providedMode) {
 
         try {
             await saveTranscription(recordToSave);
-            console.log("[SAVE] Guardado exitoso en IndexedDB");
+            setCurrentSessionId(recordToSave.id);
+            console.log("[SAVE] Guardado exitoso en IndexedDB. ID:", recordToSave.id);
         } catch (e) {
             console.error("[SAVE] Error al guardar en DB:", e);
         }

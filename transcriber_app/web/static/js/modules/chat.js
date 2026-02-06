@@ -4,11 +4,28 @@
  */
 
 import { chatStream } from "./api.js";
+import { getCurrentSessionId } from "./appState.js";
 import { elements } from "./domElements.js";
+import { updateChatHistory } from "./historyStorage.js";
 import { hideOverlay, showOverlay } from "./ui.js";
 import { formatAsHTML, parseMarkdown } from "./utils.js";
 
 let chatHistory = [];
+
+/**
+ * Persiste el historial de chat actual en IndexedDB
+ */
+async function persistChat() {
+    const sessionId = getCurrentSessionId();
+    if (sessionId && chatHistory.length > 0) {
+        try {
+            await updateChatHistory(sessionId, chatHistory);
+            console.log("[CHAT] Historial persistido para sesión:", sessionId);
+        } catch (e) {
+            console.error("[CHAT] Error persistiendo historial:", e);
+        }
+    }
+}
 
 /**
  * Añade un mensaje al chat
@@ -74,6 +91,7 @@ async function sendMessage() {
     addMessage(msg, "user");
     if (elements.chatInput) elements.chatInput.value = "";
     chatHistory.push({ role: "user", content: msg });
+    persistChat(); // Guardar mensaje del usuario
 
     const aiMsg = addMessage("", "ai", true);
     showOverlay();
@@ -97,6 +115,7 @@ async function sendMessage() {
         // Cuando termina el streaming → renderizamos markdown completo
         if (aiMsg) aiMsg.innerHTML = parseMarkdown(textoFinal);
         chatHistory.push({ role: "assistant", content: textoFinal });
+        persistChat(); // Guardar respuesta completa de la IA
 
     } catch (e) {
         hideOverlay();

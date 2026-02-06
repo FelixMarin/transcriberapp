@@ -8,6 +8,21 @@ let lastRecordingName = null;
 let lastRecordingDuration = null;
 let hasTranscript = false;
 let processedModes = [];
+let currentSessionId = null;
+
+/**
+ * Obtiene el ID de la sesión actual
+ */
+function getCurrentSessionId() {
+    return currentSessionId;
+}
+
+/**
+ * Establece el ID de la sesión actual
+ */
+function setCurrentSessionId(id) {
+    currentSessionId = id;
+}
 
 /**
  * Obtiene el blob de la grabación actual
@@ -97,9 +112,10 @@ function resetAllState() {
     lastRecordingDuration = null;
     hasTranscript = false;
     processedModes = [];
+    currentSessionId = null;
 }
 
 export {
-    addProcessedMode, getHasTranscript, getLastRecordingBlob, getLastRecordingDuration, getLastRecordingName, getProcessedModes, resetAllState, resetProcessedModes, setHasTranscript, setLastRecordingBlob, setLastRecordingDuration, setLastRecordingName
+    addProcessedMode, getCurrentSessionId, getHasTranscript, getLastRecordingBlob, getLastRecordingDuration, getLastRecordingName, getProcessedModes, resetAllState, resetProcessedModes, setCurrentSessionId, setHasTranscript, setLastRecordingBlob, setLastRecordingDuration, setLastRecordingName
 };
 

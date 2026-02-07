@@ -64,6 +64,9 @@ def send_email_with_attachment(to: str, subject: str, body: str, attachment_path
             '.jpeg': ('image', 'jpeg'),
             '.png': ('image', 'png'),
             '.mp3': ('audio', 'mpeg'),
+            '.m4a': ('audio', 'mp4'),
+            '.mp4': ('audio', 'mp4'),
+            '.webm': ('audio', 'webm'),
             '.wav': ('audio', 'wav'),
         }
 

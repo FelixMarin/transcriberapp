@@ -24,6 +24,8 @@ function initializeElements() {
         // Elementos de estado y preview
         statusText: document.getElementById("status"),
         preview: document.getElementById("preview"),
+        previewContainer: document.getElementById("previewContainer"),
+        debugArea: document.getElementById("debugArea"),
         fileInput: document.getElementById("fileInput"),
 
         // Elementos del chat

@@ -150,6 +150,7 @@ function resetUI() {
     if (elements.preview) {
         elements.preview.src = "";
         elements.preview.hidden = true;
+        elements.preview.style.display = "none";
     }
 
     if (elements.chatToggle) elements.chatToggle.disabled = true;
@@ -278,6 +279,7 @@ function setupModalHandlers() {
             if (elements.preview) {
                 elements.preview.src = "";
                 elements.preview.hidden = true;
+                elements.preview.style.display = "none";
             }
         };
     }
@@ -347,12 +349,20 @@ function setupRecordingHandlers() {
 
     if (elements.stopBtn) {
         elements.stopBtn.onclick = async () => {
-            stopRecording();
+            // Esperar a que el MediaRecorder se detenga correctamente
+            await stopRecording();
+
             const blob = getRecordingBlob();
             if (blob) {
                 setLastRecordingBlob(blob);
-                setLastRecordingDuration(await getAudioDuration(blob));
+
+                // Mostrar el preview inmediatamente para mejor feedback visual
                 displayAudioPreview(blob);
+
+                // Detectar duración (con timeout interno)
+                const duration = await getAudioDuration(blob);
+                if (duration) setLastRecordingDuration(duration);
+
                 validateForm(blob);
                 updateRecordingButtonsState(true);  // Hay audio ahora
                 updateSendButtonState(

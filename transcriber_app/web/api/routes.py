@@ -44,9 +44,12 @@ async def upload_audio(
     audios_dir = Path("audios")
     audios_dir.mkdir(exist_ok=True)
 
-    # Guardar archivo
+    # Guardar archivo con su extensión original
     safe_name = nombre.lower()
-    audio_path = audios_dir / f"{safe_name}.mp3"
+    original_ext = Path(audio.filename).suffix.lower() if audio.filename else ".webm"
+    if not original_ext: original_ext = ".webm"
+    
+    audio_path = audios_dir / f"{safe_name}{original_ext}"
     with audio_path.open("wb") as f:
         f.write(await audio.read())
 
@@ -105,9 +108,12 @@ async def chat_stream(payload: dict):
 
 @router.get("/check-name")
 def check_name(name: str):
-    filename = f"{name}.mp3"
-    exists = os.path.exists(os.path.join(RECORDINGS_DIR, filename))
-    return {"exists": exists}
+    # Verificar cualquier extensión común
+    for ext in [".webm", ".mp3", ".wav", ".m4a", ".mp4"]:
+        filename = f"{name}{ext}"
+        if os.path.exists(os.path.join(RECORDINGS_DIR, filename)):
+            return {"exists": True, "extension": ext}
+    return {"exists": False}
 
 
 @router.post("/process-existing")

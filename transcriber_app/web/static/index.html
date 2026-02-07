@@ -102,13 +102,16 @@
                 Esperando grabación…
             </p>
 
-            <audio id="preview" 
-                   controls 
-                   class="audio-preview" 
-                   hidden
-                   aria-label="Previsualización del audio grabado">
-                Tu navegador no soporta el elemento de audio.
-            </audio>
+            <div id="previewContainer" class="preview-container" hidden>
+                <audio id="preview" 
+                       controls 
+                       preload="auto"
+                       class="audio-preview" 
+                       aria-label="Previsualización del audio grabado">
+                    Tu navegador no soporta el elemento de audio o no puede reproducir este formato.
+                </audio>
+                <div id="debugArea" class="debug-area" hidden></div>
+            </div>
         </section>
 
         <!-- Botón de acción principal -->
@@ -222,6 +225,6 @@
 
     <!-- Scripts al final para mejor rendimiento -->
     <script src="/static/lib/marked.min.js"></script>
-    <script type="module" src="/static/js/main.js?v=024"></script>
+    <script type="module" src="/static/js/main.js?v=026"></script>
 </body>
 </html>

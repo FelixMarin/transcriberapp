@@ -72,7 +72,15 @@ async function uploadAudio(audioBlob, nombre, modo, email) {
     }
 
     const formData = new FormData();
-    formData.append("audio", audioBlob, `${nombre}.mp3`);
+    // Determinar extensión según MIME type
+    let extension = "webm";
+    if (audioBlob.type.includes("mp4") || audioBlob.type.includes("aac")) {
+        extension = "m4a";
+    } else if (audioBlob.type.includes("ogg")) {
+        extension = "ogg";
+    }
+
+    formData.append("audio", audioBlob, `${nombre}.${extension}`);
     formData.append("nombre", nombre);
     formData.append("modo", modo);
     formData.append("email", email);

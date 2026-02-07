@@ -18,7 +18,8 @@ function downloadRecording(lastRecordingBlob) {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${nombre}.mp3`;
+    const extension = lastRecordingBlob.type.split("/")[1]?.split(";")[0] || "webm";
+    a.download = `${nombre}.${extension}`;
     a.click();
 
     URL.revokeObjectURL(url);
@@ -38,6 +39,9 @@ function deleteRecording(callback) {
     }
 
     // Limpiar UI
+    if (elements.previewContainer) {
+        elements.previewContainer.hidden = true;
+    }
     if (elements.preview) {
         elements.preview.src = "";
         elements.preview.hidden = true;
@@ -90,17 +94,44 @@ function handleFileUpload(file, callback) {
  * Prepara la preview de audio
  */
 function displayAudioPreview(blob) {
-    if (!blob || !elements.preview) return;
+    if (!blob || !elements.preview || !elements.previewContainer) return;
 
     const url = URL.createObjectURL(blob);
-    elements.preview.src = url;
+
+    // 1. Mostrar contenedor principal
+    elements.previewContainer.removeAttribute("hidden");
+    elements.previewContainer.hidden = false;
+    elements.previewContainer.style.display = "block";
+
+    // 2. Refrescar elemento de audio (recrear source para forzar al motor del navegador)
+    elements.preview.innerHTML = "";
+    const source = document.createElement("source");
+    source.src = url;
+    source.type = blob.type;
+    elements.preview.appendChild(source);
+
+    elements.preview.load();
+    elements.preview.controls = true;
+    elements.preview.removeAttribute("hidden");
     elements.preview.hidden = false;
+
+    // 3. Información de depuración (útil para el usuario móvil)
+    if (elements.debugArea) {
+        elements.debugArea.removeAttribute("hidden");
+        elements.debugArea.hidden = false;
+        elements.debugArea.textContent = `Blob: ${blob.size} bytes | Type: ${blob.type}\nURL: ${url.substring(0, 50)}...`;
+    }
+
+    console.log("📺 Preview de audio actualizado (Robust):", url, `(${blob.type}, ${blob.size} bytes)`);
 }
 
 /**
  * Limpia la preview de audio
  */
 function clearAudioPreview() {
+    if (elements.previewContainer) {
+        elements.previewContainer.hidden = true;
+    }
     if (elements.preview) {
         elements.preview.src = "";
         elements.preview.hidden = true;

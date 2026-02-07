@@ -21,10 +21,17 @@ def process_audio_job(job_id: str, nombre: str, modo: str, email: str):
     try:
         JOB_STATUS[job_id] = {"status": "running"}
 
-        audio_path = Path("audios") / f"{nombre}.mp3"
-        if not audio_path.exists():
+        # Buscar el archivo con diferentes extensiones posibles
+        audio_path = None
+        for ext in [".m4a", ".mp4", ".webm", ".mp3", ".wav"]:
+            temp_path = Path("audios") / f"{nombre}{ext}"
+            if temp_path.exists():
+                audio_path = temp_path
+                break
+        
+        if not audio_path:
             JOB_STATUS[job_id] = {"status": "error"}
-            logger.error(f"[BACKGROUND JOB] Audio no encontrado: {audio_path}")
+            logger.error(f"[BACKGROUND JOB] Audio no encontrado para: {nombre}")
             return
 
         # === USAR EL MISMO PIPELINE QUE EL CLI PERO SIN GUARDAR ARCHIVOS ===
@@ -54,7 +61,7 @@ def process_audio_job(job_id: str, nombre: str, modo: str, email: str):
     finally:
         # Borrar el audio original siempre
         try:
-            audio_path = Path("audios") / f"{nombre}.mp3"
+            audio_path = Path("audios") / f"{nombre}.webm"
             if audio_path.exists():
                 os.remove(audio_path)
                 logger.info(f"[BACKGROUND JOB] Audio temporal eliminado: {audio_path}")

@@ -91,7 +91,7 @@ export function waitFor(ms) {
  */
 export function createTestBlob() {
     const data = new Uint8Array([1, 2, 3, 4, 5]);
-    return new Blob([data], { type: "audio/mp3" });
+    return new Blob([data], { type: "audio/webm" });
 }
 
 /**

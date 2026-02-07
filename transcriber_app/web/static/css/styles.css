@@ -437,6 +437,29 @@ body.history-open.chat-open .session-status {
     margin-top: 1rem;
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-gray-300);
+    display: block !important; /* Forzar bloque */
+}
+
+.preview-container {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: var(--color-gray-50);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    width: 100%;
+}
+
+.debug-area {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    font-family: monospace;
+    font-size: 0.75rem;
+    background: #000;
+    color: #0f0;
+    max-height: 100px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    border-radius: 2px;
 }
 
 /* ============================================

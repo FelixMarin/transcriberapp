@@ -40,11 +40,11 @@ function deleteRecording(callback) {
 
     // Limpiar UI
     if (elements.previewContainer) {
-        elements.previewContainer.hidden = true;
+        elements.previewContainer.style.display = "none";
     }
     if (elements.preview) {
         elements.preview.src = "";
-        elements.preview.hidden = true;
+        elements.preview.style.display = "none";
     }
 
     if (elements.sendBtn) elements.sendBtn.disabled = true;
@@ -94,35 +94,46 @@ function handleFileUpload(file, callback) {
  * Prepara la preview de audio
  */
 function displayAudioPreview(blob) {
-    if (!blob || !elements.preview || !elements.previewContainer) return;
+    if (!blob) return;
+
+    // Búsqueda directa para evitar condiciones de carrera en móviles
+    const container = document.getElementById("previewContainer");
+
+    if (!container) {
+        console.error("❌ previewContainer no encontrado");
+        return;
+    }
 
     const url = URL.createObjectURL(blob);
 
     // 1. Mostrar contenedor principal
-    elements.previewContainer.removeAttribute("hidden");
-    elements.previewContainer.hidden = false;
-    elements.previewContainer.style.display = "block";
+    container.style.display = "block";
+    container.style.opacity = "1";
 
-    // 2. Refrescar elemento de audio (recrear source para forzar al motor del navegador)
-    elements.preview.innerHTML = "";
+    // 2. REEMPLAZO TOTAL DEL NODO (Forzar render en Chrome Android)
+    const oldAudio = document.getElementById("preview");
+    if (oldAudio) {
+        oldAudio.remove();
+    }
+
+    const newAudio = document.createElement("audio");
+    newAudio.id = "preview";
+    newAudio.controls = true;
+    newAudio.preload = "auto";
+    newAudio.className = "audio-preview";
+    newAudio.style.display = "block";
+    newAudio.ariaLabel = "Previsualización del audio grabado";
+
     const source = document.createElement("source");
     source.src = url;
     source.type = blob.type;
-    elements.preview.appendChild(source);
+    newAudio.appendChild(source);
 
-    elements.preview.load();
-    elements.preview.controls = true;
-    elements.preview.removeAttribute("hidden");
-    elements.preview.hidden = false;
+    container.appendChild(newAudio);
 
-    // 3. Información de depuración (útil para el usuario móvil)
-    if (elements.debugArea) {
-        elements.debugArea.removeAttribute("hidden");
-        elements.debugArea.hidden = false;
-        elements.debugArea.textContent = `Blob: ${blob.size} bytes | Type: ${blob.type}\nURL: ${url.substring(0, 50)}...`;
-    }
+    newAudio.load();
 
-    console.log("📺 Preview de audio actualizado (Robust):", url, `(${blob.type}, ${blob.size} bytes)`);
+    console.log("📺 Preview de audio listo:", url);
 }
 
 /**
@@ -130,11 +141,11 @@ function displayAudioPreview(blob) {
  */
 function clearAudioPreview() {
     if (elements.previewContainer) {
-        elements.previewContainer.hidden = true;
+        elements.previewContainer.style.display = "none";
     }
     if (elements.preview) {
         elements.preview.src = "";
-        elements.preview.hidden = true;
+        elements.preview.style.display = "none";
     }
 }
 

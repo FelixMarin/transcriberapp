@@ -10,60 +10,67 @@ let cachedElements = null;
  * Se ejecuta de forma lazy cuando se necesita
  */
 function initializeElements() {
-    if (cachedElements) return cachedElements;
+    if (!cachedElements) {
+        cachedElements = {};
+    }
 
-    cachedElements = {
+    const selectors = {
         // Botones principales
-        recordBtn: document.getElementById("recordBtn"),
-        stopBtn: document.getElementById("stopBtn"),
-        sendBtn: document.getElementById("sendBtn"),
-        deleteBtn: document.getElementById("deleteBtn"),
-        downloadBtn: document.getElementById("downloadBtn"),
-        uploadBtn: document.getElementById("uploadBtn"),
+        recordBtn: "recordBtn",
+        stopBtn: "stopBtn",
+        sendBtn: "sendBtn",
+        deleteBtn: "deleteBtn",
+        downloadBtn: "downloadBtn",
+        uploadBtn: "uploadBtn",
 
         // Elementos de estado y preview
-        statusText: document.getElementById("status"),
-        preview: document.getElementById("preview"),
-        previewContainer: document.getElementById("previewContainer"),
-        debugArea: document.getElementById("debugArea"),
-        fileInput: document.getElementById("fileInput"),
+        statusText: "status",
+        previewContainer: "previewContainer",
+        fileInput: "fileInput",
 
         // Elementos del chat
-        chatToggle: document.getElementById("chatToggle"),
-        chatPanel: document.getElementById("chatPanel"),
-        chatClose: document.getElementById("chatClose"),
-        chatMessages: document.getElementById("chatMessages"),
-        chatInput: document.getElementById("chatInput"),
-        chatSend: document.getElementById("chatSend"),
+        chatToggle: "chatToggle",
+        chatPanel: "chatPanel",
+        chatClose: "chatClose",
+        chatMessages: "chatMessages",
+        chatInput: "chatInput",
+        chatSend: "chatSend",
 
         // Elementos del formulario
-        nombre: document.getElementById("nombre"),
-        email: document.getElementById("email"),
-        modo: document.getElementById("modo"),
+        nombre: "nombre",
+        email: "email",
+        modo: "modo",
 
         // Elementos de información y warning
-        nameWarning: document.getElementById("name-warning"),
-        sessionLabel: document.getElementById("sessionLabel"),
+        nameWarning: "name-warning",
+        sessionLabel: "sessionLabel",
 
         // Elementos de resultados
-        transcripcionTexto: document.getElementById("transcripcionTexto"),
-        mdResult: document.getElementById("mdResult"),
+        transcripcionTexto: "transcripcionTexto",
+        mdResult: "mdResult",
 
         // Elementos de UI
-        overlayLoading: document.getElementById("overlayLoading"),
-        btnImprimirPDF: document.getElementById("btnImprimirPDF"),
-        historyToggle: document.getElementById("historyToggle"),
-        historyPanel: document.getElementById("historyPanel"),
-        historyList: document.getElementById("historyList"),
-        multiResults: document.getElementById("multiResults"),
-        historyClose: document.getElementById("historyClose"),
+        overlayLoading: "overlayLoading",
+        btnImprimirPDF: "btnImprimirPDF",
+        historyToggle: "historyToggle",
+        historyPanel: "historyPanel",
+        historyList: "historyList",
+        multiResults: "multiResults",
+        historyClose: "historyClose",
 
         // Elementos colapsables
-        transcriptionTitle: document.getElementById("transcriptionTitle"),
-        resultTitle: document.getElementById("resultTitle"),
-        transcriptionContent: document.getElementById("transcriptionContent"),
-        resultContent: document.getElementById("resultContent")
+        transcriptionTitle: "transcriptionTitle",
+        resultTitle: "resultTitle",
+        transcriptionContent: "transcriptionContent",
+        resultContent: "resultContent"
     };
+
+    // Solo buscar elementos que no hayan sido encontrados previamente con éxito
+    for (const [key, id] of Object.entries(selectors)) {
+        if (!cachedElements[key]) {
+            cachedElements[key] = document.getElementById(id);
+        }
+    }
 
     return cachedElements;
 }
@@ -73,6 +80,9 @@ function initializeElements() {
  */
 const elements = new Proxy({}, {
     get: (target, prop) => {
+        if (prop === "preview") {
+            return document.getElementById("preview");
+        }
         const els = initializeElements();
         return els[prop];
     }

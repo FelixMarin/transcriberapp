@@ -1,5 +1,6 @@
 import unittest
 from transcriber_app.modules.audio_receiver import AudioReceiver
+import os
 
 class TestAudioReceiver(unittest.TestCase):
     def test_load(self):
@@ -10,17 +11,14 @@ class TestAudioReceiver(unittest.TestCase):
         self.assertIn("path", result)
         self.assertIn("name", result)
 
-if __name__ == "__main__":
-    unittest.main()
-import unittest
-from transcriber_app.modules.audio_receiver import AudioReceiver
-
-class TestAudioReceiver(unittest.TestCase):
     def test_load_error(self):
         audio_receiver = AudioReceiver()
         audio_path = "path/to/non/existent/audio/file.wav"
-        with self.assertRaises(FileNotFoundError):
-            audio_receiver.load(audio_path)
+        if not os.path.exists(audio_path):
+            with self.assertRaises(FileNotFoundError):
+                audio_receiver.load(audio_path)
+        else:
+            self.fail("El archivo existe")
 
 if __name__ == "__main__":
     unittest.main()

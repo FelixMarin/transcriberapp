@@ -73,11 +73,7 @@ function triggerFileInput() {
 function handleFileUpload(file, callback) {
     if (!file || !callback) return;
 
-    const url = URL.createObjectURL(file);
-    if (elements.preview) {
-        elements.preview.src = url;
-        elements.preview.hidden = false;
-    }
+    displayAudioPreview(file);
 
     validateForm(file);
     if (elements.deleteBtn) elements.deleteBtn.disabled = false;
@@ -106,11 +102,12 @@ function displayAudioPreview(blob) {
 
     const url = URL.createObjectURL(blob);
 
-    // 1. Mostrar contenedor principal
+    // 1. Mostrar contenedor principal (CSS-only approach for better desktop/mobile compatibility)
     container.style.display = "block";
     container.style.opacity = "1";
+    container.style.visibility = "visible";
 
-    // 2. REEMPLAZO TOTAL DEL NODO (Forzar render en Chrome Android)
+    // 2. REEMPLAZO TOTAL DEL NODO (Forzar render en Chrome Android y asegurar visibilidad en Desktop)
     const oldAudio = document.getElementById("preview");
     if (oldAudio) {
         oldAudio.remove();
@@ -121,7 +118,7 @@ function displayAudioPreview(blob) {
     newAudio.controls = true;
     newAudio.preload = "auto";
     newAudio.className = "audio-preview";
-    newAudio.style.display = "block";
+    newAudio.style.display = "block"; // Asegurar que el elemento audio sea tratado como bloque
     newAudio.ariaLabel = "Previsualización del audio grabado";
 
     const source = document.createElement("source");

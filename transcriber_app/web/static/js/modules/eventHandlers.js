@@ -147,10 +147,13 @@ function resetUI() {
     document.getElementById("transcripcion")?.setAttribute("hidden", true);
     document.getElementById("btnNuevaSesion").disabled = true;
 
-    if (elements.preview) {
-        elements.preview.src = "";
-        elements.preview.hidden = true;
-        elements.preview.style.display = "none";
+    if (elements.previewContainer) {
+        elements.previewContainer.style.display = "none";
+    }
+    const preview = document.getElementById("preview");
+    if (preview) {
+        preview.src = "";
+        preview.style.display = "none";
     }
 
     if (elements.chatToggle) elements.chatToggle.disabled = true;
@@ -276,10 +279,13 @@ function setupModalHandlers() {
             clearFormFields();
             setStatusText("");
             document.getElementById("modalNuevaSesion")?.classList.remove("hidden");
-            if (elements.preview) {
-                elements.preview.src = "";
-                elements.preview.hidden = true;
-                elements.preview.style.display = "none";
+            const preview = document.getElementById("preview");
+            if (preview) {
+                preview.src = "";
+                preview.style.display = "none";
+            }
+            if (elements.previewContainer) {
+                elements.previewContainer.style.display = "none";
             }
         };
     }

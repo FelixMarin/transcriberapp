@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transcriberapp
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: transcriberapp
+  template:
+    metadata:
+      labels:
+        app: transcriberapp
+    spec:
+      containers:
+        - name: transcriberapp
+          image: transcriberapp-dev
+
+          command:
+            - uvicorn
+            - transcriber_app.web.web_app:app
+            - --host
+            - "0.0.0.0"
+            - --port
+            - "9000"
+            - --reload
+            - --ssl-keyfile
+            - /certs/ubuntu.tail921051.ts.net.key
+            - --ssl-certfile
+            - /certs/ubuntu.tail921051.ts.net.crt
+
+          ports:
+            - containerPort: 9000
+
+          env:
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: transcriberapp-secrets
+                  key: groq_api_key
+
+            - name: TZ
+              value: "Europe/Madrid"
+
+            - name: UVICORN_WORKERS
+              value: "1"
+
+          volumeMounts:
+            - name: src
+              mountPath: /app
+
+            - name: audios
+              mountPath: /app/audios
+
+            - name: transcripts
+              mountPath: /app/transcripts
+
+            - name: outputs
+              mountPath: /app/outputs
+
+            - name: tailscale-certs
+              mountPath: /certs
+              readOnly: true
+
+      volumes:
+        - name: src
+          hostPath:
+            path: /home/jetson/Public/transcriberapp
+            type: Directory
+
+        - name: audios
+          persistentVolumeClaim:
+            claimName: transcriberapp-audios
+
+        - name: transcripts
+          persistentVolumeClaim:
+            claimName: transcriberapp-transcripts
+
+        - name: outputs
+          persistentVolumeClaim:
+            claimName: transcriberapp-outputs
+
+        - name: tailscale-certs
+          hostPath:
+            path: /var/lib/tailscale/certs
+            type: Directory

@@ -432,3 +432,323 @@ MIT
 ## ✨ Agradecimientos
 
 OpenAI, Google, NVIDIA, FastAPI, comunidad Jetson.
+
+# TranscriberApp — Despliegue en Jetson Orin + Kubernetes (k3s) + Tailscale + HTTPS
+
+Este documento describe **todo el proceso real** seguido para desplegar TranscriberApp en un Jetson Orin Nano usando:
+
+- Docker optimizado para Jetson (L4T)
+- Kubernetes k3s
+- Tailscale para acceso remoto seguro
+- HTTPS automático con certificados de Tailscale
+- NodePort para exposición del servicio
+- Persistencia con PVCs
+
+Incluye además una sección completa de **troubleshooting**, basada en los problemas reales encontrados durante la instalación.
+
+---
+
+# 1. 🧱 Estructura del proyecto
+
+```
+TranscriberApp/
+├── transcriber_app/
+├── utils/
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+├── k8s/
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   ├── ingress/ (no usado)
+│   └── storage/
+├── audios/ (PVC)
+├── transcripts/ (PVC)
+├── outputs/ (PVC)
+└── .dockerignore
+```
+
+---
+
+# 2. 🐳 Construcción de la imagen Docker optimizada
+
+## 2.1 Problema inicial
+Las primeras imágenes pesaban **16.2 GB**, lo que hacía imposible:
+
+- subirlas a Docker Hub  
+- que containerd las extrajera  
+- que k3s las ejecutara  
+
+## 2.2 Solución
+Se creó un Dockerfile optimizado basado en:
+
+```
+FROM nvcr.io/nvidia/l4t-base:r36.3.0
+```
+
+Este contenedor es:
+
+- compatible con JetPack 6.x  
+- mucho más ligero que `l4t-jetpack`  
+- suficiente para Python + FFmpeg  
+
+## 2.3 `.dockerignore` crítico
+Para evitar copiar basura dentro de la imagen:
+
+```
+venv/
+audios/
+outputs/
+transcripts/
+wheels/
+__pycache__/
+*.pyc
+k8s/secret.yaml
+```
+
+Esto redujo la imagen final a **~2 GB**.
+
+---
+
+# 3. 🚀 Despliegue en Kubernetes (k3s)
+
+## 3.1 Deployment con HTTPS
+El contenedor se arranca con Uvicorn en modo SSL:
+
+```yaml
+command:
+  - uvicorn
+  - transcriber_app.web.web_app:app
+  - --host
+  - "0.0.0.0"
+  - --port
+  - "9000"
+  - --ssl-keyfile
+  - /certs/ubuntu.tailXXXXXX.ts.net.key
+  - --ssl-certfile
+  - /certs/ubuntu.tailXXXXXX.ts.net.crt
+```
+
+Los certificados se montan desde el host:
+
+```yaml
+volumeMounts:
+  - name: tailscale-certs
+    mountPath: /certs
+    readOnly: true
+
+volumes:
+  - name: tailscale-certs
+    hostPath:
+      path: /var/lib/tailscale/certs
+      type: Directory
+```
+
+## 3.2 Service expuesto como NodePort
+Para acceso desde Tailscale:
+
+```yaml
+type: NodePort
+ports:
+  - port: 9000
+    targetPort: 9000
+    nodePort: 30090
+```
+
+Acceso final:
+
+```
+https://ubuntu.tailXXXXXX.ts.net:30090/
+```
+
+---
+
+# 4. 🔐 HTTPS con Tailscale
+
+## 4.1 Generación del certificado
+Tailscale solo permite certificados para **dominios válidos del tailnet**.
+
+Comando correcto:
+
+```
+sudo tailscale cert ubuntu.tailXXXXXX.ts.net
+```
+
+Esto genera:
+
+```
+/var/lib/tailscale/certs/ubuntu.tailXXXXXX.ts.net.crt
+/var/lib/tailscale/certs/ubuntu.tailXXXXXX.ts.net.key
+```
+
+## 4.2 Renovación automática
+Tailscale renueva los certificados sin intervención manual.
+
+---
+
+# 5. 🛠️ Troubleshooting completo
+
+Esta sección recoge **todos los problemas reales** encontrados y cómo se resolvieron.
+
+---
+
+## ❌ Problema 1 — La imagen Docker pesaba 16 GB
+**Causa:**  
+`COPY . .` copiaba:
+
+- venv  
+- audios  
+- outputs  
+- wheels  
+- docs  
+- cachés  
+
+**Solución:**  
+Crear `.dockerignore` y usar `l4t-base`.
+
+---
+
+## ❌ Problema 2 — containerd no podía extraer la imagen
+**Causa:**  
+Imagen demasiado grande para Jetson.
+
+**Solución:**  
+Reducir la imagen a ~2 GB.
+
+---
+
+## ❌ Problema 3 — `nvcr.io/nvidia/l4t-base:r36.4.0` no existe
+**Causa:**  
+Esa etiqueta no está publicada en NGC.
+
+**Solución:**  
+Usar:
+
+```
+nvcr.io/nvidia/l4t-base:r36.3.0
+```
+
+---
+
+## ❌ Problema 4 — Error al descargar imágenes de NGC
+**Causa:**  
+NGC requiere autenticación.
+
+**Solución:**
+
+```
+docker login nvcr.io
+username: $oauthtoken
+password: <API key de NGC>
+```
+
+---
+
+## ❌ Problema 5 — El pod no era accesible desde Tailscale
+**Causa:**  
+El Service era `ClusterIP`.
+
+**Solución:**  
+Cambiar a `NodePort`.
+
+---
+
+## ❌ Problema 6 — HTTPS no funcionaba
+**Causa:**  
+Intento de generar certificado para un dominio inválido:
+
+```
+tailscale cert transcriberapp → invalid domain
+```
+
+**Solución:**  
+Usar el dominio real del tailnet:
+
+```
+tailscale cert ubuntu.tailXXXXXX.ts.net
+```
+
+---
+
+## ❌ Problema 7 — Traefik `svclb-traefik` en CrashLoopBackOff
+**Causa:**  
+k3s crea un LoadBalancer interno que falla si:
+
+- no hay MetalLB  
+- Tailscale interfiere  
+- puertos 80/443 están ocupados  
+
+**Solución:**  
+Ignorar Traefik y usar NodePort + Tailscale HTTPS.
+
+---
+
+## ❌ Problema 8 — El Jetson tenía imágenes antiguas ocupando 45 GB
+**Solución:**
+
+```
+docker rmi transcriberapp-base:latest
+docker rmi transcriberapp-container:latest
+docker system prune -a
+```
+
+---
+
+# 6. ✔ Estado final del sistema
+
+- TranscriberApp funcionando en Kubernetes  
+- HTTPS real con certificados de Tailscale  
+- Acceso remoto seguro desde cualquier dispositivo  
+- Imagen Docker ligera y optimizada  
+- PVCs funcionando  
+- Traefik no necesario para este caso  
+- Clúster estable  
+
+---
+
+# 7. 📡 Acceso final a la aplicación
+
+```
+https://ubuntu.tailXXXXXX.ts.net:30090/
+```
+
+---
+
+# 8. 📦 Comandos útiles
+
+Ver pods:
+
+```
+kubectl get pods -A
+```
+
+Ver logs:
+
+```
+kubectl logs -l app=transcriberapp -f
+```
+
+Reiniciar la app:
+
+```
+kubectl delete pod -l app=transcriberapp
+```
+
+---
+
+# 9. 🧹 Limpieza de imágenes Docker
+
+```
+docker system df
+docker rmi <imagen>
+docker system prune -a
+```
+
+---
+
+# 10. 📝 Notas finales
+
+Este README documenta **todo el proceso real**, incluyendo errores, decisiones técnicas y soluciones aplicadas.  
+Es una guía completa para reproducir el despliegue en cualquier Jetson con k3s + Tailscale.
+
+```

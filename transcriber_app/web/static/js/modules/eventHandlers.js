@@ -147,9 +147,13 @@ function resetUI() {
     document.getElementById("transcripcion")?.setAttribute("hidden", true);
     document.getElementById("btnNuevaSesion").disabled = true;
 
-    if (elements.preview) {
-        elements.preview.src = "";
-        elements.preview.hidden = true;
+    if (elements.previewContainer) {
+        elements.previewContainer.style.display = "none";
+    }
+    const preview = document.getElementById("preview");
+    if (preview) {
+        preview.src = "";
+        preview.style.display = "none";
     }
 
     if (elements.chatToggle) elements.chatToggle.disabled = true;
@@ -275,9 +279,13 @@ function setupModalHandlers() {
             clearFormFields();
             setStatusText("");
             document.getElementById("modalNuevaSesion")?.classList.remove("hidden");
-            if (elements.preview) {
-                elements.preview.src = "";
-                elements.preview.hidden = true;
+            const preview = document.getElementById("preview");
+            if (preview) {
+                preview.src = "";
+                preview.style.display = "none";
+            }
+            if (elements.previewContainer) {
+                elements.previewContainer.style.display = "none";
             }
         };
     }
@@ -347,12 +355,20 @@ function setupRecordingHandlers() {
 
     if (elements.stopBtn) {
         elements.stopBtn.onclick = async () => {
-            stopRecording();
+            // Esperar a que el MediaRecorder se detenga correctamente
+            await stopRecording();
+
             const blob = getRecordingBlob();
             if (blob) {
                 setLastRecordingBlob(blob);
-                setLastRecordingDuration(await getAudioDuration(blob));
+
+                // Mostrar el preview inmediatamente para mejor feedback visual
                 displayAudioPreview(blob);
+
+                // Detectar duración (con timeout interno)
+                const duration = await getAudioDuration(blob);
+                if (duration) setLastRecordingDuration(duration);
+
                 validateForm(blob);
                 updateRecordingButtonsState(true);  // Hay audio ahora
                 updateSendButtonState(

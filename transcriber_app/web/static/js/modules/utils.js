@@ -103,12 +103,12 @@ function reconstructBlob(stored) {
 
     // Caso 2: viene como ArrayBuffer o Uint8Array
     if (stored.data) {
-        return new Blob([new Uint8Array(stored.data)], { type: stored.type || "audio/mp3" });
+        return new Blob([new Uint8Array(stored.data)], { type: stored.type || "audio/webm" });
     }
 
     // Caso 3: viene como objeto serializado por IndexedDB
     if (stored.arrayBuffer) {
-        return new Blob([new Uint8Array(stored.arrayBuffer)], { type: stored.type || "audio/mp3" });
+        return new Blob([new Uint8Array(stored.arrayBuffer)], { type: stored.type || "audio/webm" });
     }
 
     console.warn("Formato de grabación desconocido:", stored);

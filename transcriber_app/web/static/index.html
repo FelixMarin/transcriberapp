@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TranscriberApp Web - Transcripción de Audio Inteligente</title>
+    <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
     <meta name="description" content="Aplicación web para grabar, transcribir y procesar audio con inteligencia artificial">
     <link rel="stylesheet" href="/static/css/github-markdown.min.css">
     <link rel="stylesheet" href="/static/css/styles.css">
-    <link rel="icon" href="data:,">
     <!-- Precargar recursos importantes -->
     <!-- <link rel="preload" href="/static/recorder.js" as="script" crossorigin> -->
 </head>
@@ -102,13 +102,15 @@
                 Esperando grabación…
             </p>
 
-            <audio id="preview" 
-                   controls 
-                   class="audio-preview" 
-                   hidden
-                   aria-label="Previsualización del audio grabado">
-                Tu navegador no soporta el elemento de audio.
-            </audio>
+            <div id="previewContainer" class="preview-container" style="display: none;">
+                <audio id="preview" 
+                       controls 
+                       preload="auto"
+                       class="audio-preview" 
+                       aria-label="Previsualización del audio grabado">
+                    Tu navegador no soporta el elemento de audio o no puede reproducir este formato.
+                </audio>
+            </div>
         </section>
 
         <!-- Botón de acción principal -->
@@ -222,6 +224,6 @@
 
     <!-- Scripts al final para mejor rendimiento -->
     <script src="/static/lib/marked.min.js"></script>
-    <script type="module" src="/static/js/main.js?v=024"></script>
+    <script type="module" src="/static/js/main.js?v=033"></script>
 </body>
 </html>

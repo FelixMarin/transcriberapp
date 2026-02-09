@@ -1,17 +1,19 @@
-# Imagen base optimizada para JetPack 6.4 sin PyTorch
-FROM transcriberapp-base:latest
+FROM python:3.10-slim
 
-# Crear directorio de trabajo
+ENV PYTHONUNBUFFERED=1
+ENV TZ=Europe/Madrid
+
 WORKDIR /app
 
-# Copiar el resto del proyecto
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libsndfile1 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY . .
 
-# Instalar dependencias del proyecto
-RUN python3 -m pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Puerto por defecto (si usas uvicorn)
 EXPOSE 9000
-
-# Comando por defecto
-CMD ["uvicorn", "transcriber_app.web.web_app:app", "--host", "0.0.0.0", "--port", "9000"]

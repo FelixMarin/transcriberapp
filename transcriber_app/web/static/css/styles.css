@@ -437,6 +437,16 @@ body.history-open.chat-open .session-status {
     margin-top: 1rem;
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-gray-300);
+    display: block !important; /* Forzar bloque */
+}
+
+.preview-container {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: var(--color-gray-50);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    width: 100%;
 }
 
 /* ============================================

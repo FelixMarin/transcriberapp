@@ -11,13 +11,13 @@ from transcriber_app.config import AVAILABLE_MODES
 
 def mostrar_ayuda():
     print("\n=== TranscriberApp ===")
-    print("Procesa audios (.mp3) o textos (.txt) y genera resúmenes con distintos modos.\n")
+    print("Procesa audios (.mp3, .webm) o textos (.txt) y genera resúmenes con distintos modos.\n")
 
     print("USO:")
     print("  python -m transcriber_app.main [audio|texto] [nombre] [modo]\n")
 
     print("PARÁMETROS:")
-    print("  audio        Procesa un archivo .mp3 desde la carpeta 'audios/'")
+    print("  audio        Procesa un archivo .mp3 o .webm desde la carpeta 'audios/'")
     print("  texto        Procesa un archivo .txt desde la carpeta 'transcripts/'")
     print("  nombre       Nombre del archivo SIN extensión")
     print("  modo         Tipo de resumen a generar\n")
@@ -63,9 +63,17 @@ def main():
     #   RESOLVER RUTA SEGÚN TIPO
     # ============================
     if input_type == "audio":
-        if not base_name.endswith(".mp3"):
-            base_name += ".mp3"
-        path = os.path.join("audios", base_name)
+        # Intentar encontrar el archivo con extensiones comunes
+        path = None
+        for ext in [".mp3", ".webm", ".wav"]:
+            test_path = os.path.join("audios", base_name if base_name.endswith(ext) else base_name + ext)
+            if os.path.exists(test_path):
+                path = test_path
+                break
+
+        if not path:
+            # Fallback a .mp3 para el mensaje de error si no existe nada
+            path = os.path.join("audios", base_name if base_name.endswith(".mp3") else base_name + ".mp3")
 
     elif input_type == "texto":
         if not base_name.endswith(".txt"):

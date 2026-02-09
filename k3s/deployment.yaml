@@ -25,8 +25,16 @@ spec:
                 secretKeyRef:
                   name: transcriberapp-secrets
                   key: groq_api_key
+
+            - name: GOOGLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: transcriberapp-secrets
+                  key: google_api_key
+
             - name: TZ
               value: "Europe/Madrid"
+
             - name: UVICORN_WORKERS
               value: "1"
 

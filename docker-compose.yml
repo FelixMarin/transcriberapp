@@ -21,6 +21,7 @@ services:
       - TZ=Europe/Madrid
       - PYTHONUNBUFFERED=1
       - GROQ_API_KEY=${GROQ_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - UVICORN_WORKERS=1
 
     command: >

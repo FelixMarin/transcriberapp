@@ -1,10 +1,12 @@
 import unittest
+from unittest.mock import patch
 from transcriber_app.modules.audio_receiver import AudioReceiver
 import os
 
 
 class TestAudioReceiver(unittest.TestCase):
-    def test_load(self):
+    @patch("os.path.exists", return_value=True)
+    def test_load(self, mock_exists):
         audio_receiver = AudioReceiver()
         audio_path = "path/to/audio/file.wav"
         result = audio_receiver.load(audio_path)

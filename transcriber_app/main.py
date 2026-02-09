@@ -70,7 +70,7 @@ def main():
             if os.path.exists(test_path):
                 path = test_path
                 break
-        
+
         if not path:
             # Fallback a .mp3 para el mensaje de error si no existe nada
             path = os.path.join("audios", base_name if base_name.endswith(".mp3") else base_name + ".mp3")

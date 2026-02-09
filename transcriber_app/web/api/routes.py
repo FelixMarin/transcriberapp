@@ -47,8 +47,10 @@ async def upload_audio(
     # Guardar archivo con su extensión original
     safe_name = nombre.lower()
     original_ext = Path(audio.filename).suffix.lower() if audio.filename else ".webm"
-    if not original_ext: original_ext = ".webm"
-    
+
+    if not original_ext: 
+        original_ext = ".webm"
+
     audio_path = audios_dir / f"{safe_name}{original_ext}"
     with audio_path.open("wb") as f:
         f.write(await audio.read())

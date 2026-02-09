@@ -2,6 +2,7 @@ import unittest
 from transcriber_app.modules.audio_receiver import AudioReceiver
 import os
 
+
 class TestAudioReceiver(unittest.TestCase):
     def test_load(self):
         audio_receiver = AudioReceiver()
@@ -19,6 +20,7 @@ class TestAudioReceiver(unittest.TestCase):
                 audio_receiver.load(audio_path)
         else:
             self.fail("El archivo existe")
+
 
 if __name__ == "__main__":
     unittest.main()

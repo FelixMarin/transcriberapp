@@ -28,7 +28,7 @@ def process_audio_job(job_id: str, nombre: str, modo: str, email: str):
             if temp_path.exists():
                 audio_path = temp_path
                 break
-        
+
         if not audio_path:
             JOB_STATUS[job_id] = {"status": "error"}
             logger.error(f"[BACKGROUND JOB] Audio no encontrado para: {nombre}")

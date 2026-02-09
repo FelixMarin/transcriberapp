@@ -26,3 +26,5 @@ __pycache__/
 
 wheels/
 .aider*
+
+k3s/secret.yaml

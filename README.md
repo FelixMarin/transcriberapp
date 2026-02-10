@@ -1,5 +1,5 @@
 
-[![Tests & Coverage](https://github.com/FelixMarin/transcriberapp/actions/workflows/coverage.yml/badge.svg)](https://github.com/FelixMarin/transcriberapp/actions/workflows/coverage.yml)
+![CI](https://github.com/FelixMarin/transcriberapp/actions/workflows/ci.yml/badge.svg) ![Coverage](./coverage.svg)
 # **TranscriberApp**
 
 TranscriberApp es una aplicación web moderna para transcribir audios, generar resúmenes inteligentes y conversar con un asistente IA contextual.  

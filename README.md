@@ -8,7 +8,7 @@ Toda la inteligencia se ejecuta mediante **APIs externas**:
 
 La aplicación está diseñada para ejecutarse de forma estable en **Kubernetes**, con almacenamiento persistente y acceso seguro mediante **Tailscale + HTTPS**.
 
-![Imagen de muestra](https://raw.githubusercontent.com/FelixMarin/transcriberapp/refs/heads/main/screen.jpg)
+![Imagen de muestra](https://raw.githubusercontent.com/FelixMarin/transcriberapp/refs/heads/main/screen1.jpg)
 
 ---
 
@@ -270,18 +270,6 @@ Reiniciar la app:
 ```bash
 kubectl delete pod -l app=transcriberapp
 ```
-
----
-
-# 📄 Licencia
-
-MIT
-
----
-
-## ✨ Agradecimientos
-
-OpenAI, Google, NVIDIA, FastAPI, comunidad Jetson.
 
 # TranscriberApp — Despliegue en Jetson Orin + Kubernetes (k3s) + Tailscale + HTTPS
 
@@ -602,3 +590,15 @@ Este README documenta **todo el proceso real**, incluyendo errores, decisiones t
 Es una guía completa para reproducir el despliegue en cualquier Jetson con k3s + Tailscale.
 
 ```
+
+---
+
+# 📄 Licencia
+
+MIT
+
+---
+
+## ✨ Agradecimientos
+
+OpenAI, Google, NVIDIA, FastAPI, comunidad Jetson.

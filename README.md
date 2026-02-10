@@ -271,9 +271,9 @@ Reiniciar la app:
 kubectl delete pod -l app=transcriberapp
 ```
 
-# TranscriberApp — Despliegue en Jetson Orin + Kubernetes (k3s) + Tailscale + HTTPS
+# TranscriberApp — Despliegue + Kubernetes (k3s) + Tailscale + HTTPS
 
-Este documento describe **todo el proceso real** seguido para desplegar TranscriberApp en un Jetson Orin Nano usando:
+Este documento describe **todo el proceso real** seguido para desplegar TranscriberApp en un usando:
 
 - Docker optimizado para Jetson (L4T)
 - Kubernetes k3s

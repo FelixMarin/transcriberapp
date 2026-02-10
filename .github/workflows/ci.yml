@@ -34,6 +34,7 @@ jobs:
 
       - name: Run tests with coverage and generate badge
         run: |
+          rm -f .coverage
           pytest --cov=transcriber_app --cov-report=xml --cov-report=term
           coverage-badge -o coverage.svg || true
 

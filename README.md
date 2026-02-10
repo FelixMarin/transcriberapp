@@ -25,45 +25,8 @@ La aplicación está diseñada para ejecutarse de forma estable en **Kubernetes*
 
 ---
 
-# 📚 Índice de documentación (`/doc`)
-
-## **1. Arquitectura y visión general**
--  [ARQUITECTURA.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/ARQUITECTURA.md)  
--  [RESUMEN_ESTRUCTURA.txt](https://github.com/FelixMarin/transcriberapp/blob/main/doc/RESUMEN_ESTRUCTURA.txt")  
--  [RESUMEN_EJECUTIVO.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/RESUMEN_EJECUTIVO.md)  
--  [DOCUMENTACION_INDICE.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/DOCUMENTACION_INDICE.md)  
-
----
-
-## **2. Refactorización y reorganización**
--  [REFACTORIZATION.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/REFACTORIZATION.md)  
--  [REFACTORIZACION_COMPLETA.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/REFACTORIZACION_COMPLETA.md)  
--  [REFACTORIZACION_MAIN_JS.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/REFACTORIZACION_MAIN_JS.md)  
--  [REFACTORIZACION_MODOS_PROCESADOS.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/REFACTORIZACION_MODOS_PROCESADOS.md)  
--  [CHECKLIST_REORGANIZACION.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/CHECKLIST_REORGANIZACION.md)  
--  [CHECKLIST_MIGRACION.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/CHECKLIST_MIGRACION.md)  
-
----
-
-## **3. Estructura del frontend estático**
--  [ANTES_DESPUES_STATIC.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/ANTES_DESPUES_STATIC.md)  
--  [ESTRUCTURA_STATIC.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/ESTRUCTURA_STATIC.md)  
-
----
-
-## **4. Módulos y lógica interna**
--  [MODULOS_GUIA.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/MODULOS_GUIA.md)  
--  [REFERENCIA_PROCESSEDMODES.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/REFERENCIA_PROCESSEDMODES.md)  
-
----
-
-## **5. Lecturas rápidas y resúmenes**
--  [LECTURA_RAPIDA.txt](https://github.com/FelixMarin/transcriberapp/blob/main/doc/LECTURA_RAPIDA.txt")  
-
----
-
-## **6. Verificación y control de calidad**
--  [VERIFICACION_REFACTORACION.md](https://github.com/FelixMarin/transcriberapp/blob/main/doc/VERIFICACION_REFACTORACION.md)  
+## **Time Line**
+-  [Documentos de desarrollo](https://github.com/FelixMarin/transcriberapp/tree/main/doc)
 
 ---
 

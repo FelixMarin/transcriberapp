@@ -7,9 +7,9 @@ START_TIME=$(date +%s)
 
 # ===== CONFIGURACIÓN =====
 IMAGE_NAME="felixmurcia/transcriberapp"
-NAMESPACE="default"           # Namespace donde está desplegada la app
-DEPLOYMENT="transcriberapp"   # Nombre del deployment en Kubernetes
-APP_LABEL="transcriberapp"    # Label 'app' usado en tus pods
+NAMESPACE="default"
+DEPLOYMENT="transcriberapp"
+APP_LABEL="transcriberapp"
 
 # ===== GENERAR TAG AUTOMÁTICO =====
 TAG=$(date +"v%Y%m%d-%H%M")
@@ -26,6 +26,20 @@ echo "  📤 Subiendo imagen al registro"
 echo "======================================"
 
 docker push $FULL_IMAGE
+
+echo "======================================"
+echo "  🧹 Eliminando imágenes antiguas de transcriberapp"
+echo "======================================"
+
+IMAGES_TO_DELETE=$(docker images felixmurcia/transcriberapp --format "{{.Repository}}:{{.Tag}} {{.CreatedAt}}" \
+  | sort -k2 -r \
+  | tail -n +2 \
+  | awk '{print $1}')
+
+for IMG in $IMAGES_TO_DELETE; do
+  echo "🗑️  Eliminando imagen antigua: $IMG"
+  docker rmi -f "$IMG" || true
+done
 
 echo "======================================"
 echo "  📝 Actualizando Deployment en Kubernetes"
@@ -48,10 +62,11 @@ echo "======================================"
 kubectl rollout status deployment/$DEPLOYMENT -n $NAMESPACE
 
 echo "======================================"
-echo "  🧹 Limpiando imágenes antiguas de Docker"
+echo "  🧹 Limpiando imágenes dangling y contenedores parados"
 echo "======================================"
 
-docker image prune -f --filter "until=24h"
+docker image prune -f
+docker container prune -f
 
 # ===== FIN DEL TEMPORIZADOR =====
 END_TIME=$(date +%s)

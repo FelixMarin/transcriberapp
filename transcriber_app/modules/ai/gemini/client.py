@@ -1,5 +1,6 @@
 # transcriber_app/modules/ai/gemini/client.py
-
+import os
+import google.generativeai as genai
 from transcriber_app.modules.ai.base.model_interface import AIModel
 from transcriber_app.modules.logging.logging_config import setup_logging
 from .agents import (
@@ -10,9 +11,10 @@ from .agents import (
     default_agent,
 )
 
-
 # Logging
 logger = setup_logging("transcribeapp")
+# Configuración de API Key
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 
 class GeminiModel(AIModel):

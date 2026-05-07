@@ -2,6 +2,8 @@
 venv/
 venv_transcriber/
 .env
+.env.prod
+docker-compose.prod.yml
 
 # Ignore personal overrides
 .vscode/settings.json
@@ -28,3 +30,8 @@ wheels/
 .aider*
 
 k3s/secret.yaml
+
+logs
+.kilo
+.vscode
+CLAUDE.md

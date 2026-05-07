@@ -6,7 +6,7 @@
 import { elements, getSectionElements } from "./domElements.js";
 
 /**
- * Muestra el overlay de carga
+ * Muestra el overlay de carga (deprecado - mantenido para compatibilidad)
  */
 function showOverlay() {
     if (elements.overlayLoading) {
@@ -15,11 +15,77 @@ function showOverlay() {
 }
 
 /**
- * Oculta el overlay de carga
+ * Oculta el overlay de carga (deprecado - mantenido para compatibilidad)
  */
 function hideOverlay() {
     if (elements.overlayLoading) {
         elements.overlayLoading.classList.add("hidden");
+    }
+}
+
+/**
+ * Muestra la barra de progreso
+ */
+function showProgressBar() {
+    const container = document.getElementById("progressContainer");
+    if (container) {
+        container.classList.remove("hidden");
+        setProgressBar(0);
+    }
+}
+
+/**
+ * Oculta la barra de progreso
+ */
+function hideProgressBar() {
+    const container = document.getElementById("progressContainer");
+    if (container) {
+        container.classList.add("hidden");
+    }
+}
+
+/**
+ * Muestra el botón de cancelar subida
+ */
+function showCancelButton() {
+    const btn = document.getElementById("cancelUploadBtn");
+    if (btn) {
+        btn.classList.remove("hidden");
+        btn.disabled = false;
+    }
+}
+
+/**
+ * Oculta el botón de cancelar subida
+ */
+function hideCancelButton() {
+    const btn = document.getElementById("cancelUploadBtn");
+    if (btn) {
+        btn.classList.add("hidden");
+        btn.disabled = true;
+    }
+}
+
+/**
+ * Actualiza la barra de progreso
+ * @param {number} percentage - Porcentaje de progreso (0-100)
+ */
+function setProgressBar(percentage) {
+    const clampedPercentage = Math.min(100, Math.max(0, percentage));
+
+    const progressBar = document.getElementById("progressBar");
+    if (progressBar) {
+        progressBar.style.width = `${clampedPercentage}%`;
+    }
+
+    const progressText = document.getElementById("progressText");
+    if (progressText) {
+        progressText.textContent = `${Math.round(clampedPercentage)}%`;
+    }
+
+    const progressContainer = document.getElementById("progressContainer");
+    if (progressContainer) {
+        progressContainer.setAttribute('aria-valuenow', clampedPercentage);
     }
 }
 
@@ -189,9 +255,14 @@ export {
     disableRecordingWithTooltip,
     enableRecordingAndClearTooltip,
     hideOverlay,
+    hideCancelButton,
+    hideProgressBar,
+    setProgressBar,
     setRecordingButtonState,
     setStatusText,
+    showCancelButton,
     showOverlay,
+    showProgressBar,
     showPrintButton,
     toggleResultSection,
     toggleTranscriptionSection,

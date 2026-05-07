@@ -11,8 +11,12 @@ import {
 } from "./api.js";
 import { elements } from "./domElements.js";
 import {
-    hideOverlay,
+    hideCancelButton,
+    hideProgressBar,
+    setProgressBar,
     setStatusText,
+    showCancelButton,
+    showProgressBar,
     toggleTranscriptionSection
 } from "./ui.js";
 import { getStatusMessage, parseMarkdown } from "./utils.js";
@@ -33,7 +37,8 @@ function startJobPolling(jobId, onComplete, onError) {
             }
 
             if (data.status === "bad_audio") {
-                hideOverlay();
+                hideProgressBar();
+                hideCancelButton();
                 alert("La grabación tiene mala calidad y no se ha podido transcribir.");
                 if (onError) onError("bad_audio");
                 return;
@@ -43,10 +48,12 @@ function startJobPolling(jobId, onComplete, onError) {
                 handleJobCompletion(data, onComplete);
             }
 
-            hideOverlay();
+            hideProgressBar();
+            hideCancelButton();
         } catch (error) {
             console.error("Error en polling:", error);
-            hideOverlay();
+            hideProgressBar();
+            hideCancelButton();
             if (onError) onError(error);
         }
     };
@@ -99,17 +106,32 @@ async function handleJobCompletion(data, onComplete) {
  * Procesa un nuevo archivo de grabación
  */
 async function processNewRecording(audioBlob, nombre, email, modo, onJobStarted, onJobCompleted, onError) {
+    console.log(`[PROCESS NEW] Iniciando procesamiento de grabación:`);
+    console.log(`  Nombre: ${nombre}`);
+    console.log(`  Modo: ${modo}`);
+    console.log(`  Email: ${email}`);
+    console.log(`  Tamaño blob: ${(audioBlob.size / 1024 / 1024).toFixed(2)} MB`);
+
+    // Mostrar barra de progreso y botón de cancelar al iniciar
+    showProgressBar();
+    setProgressBar(0);
+    setStatusText("Preparando subida...");
+    showCancelButton();
+
     const result = await uploadAudio(audioBlob, nombre, modo, email);
 
     if (!result.success) {
-        hideOverlay();
         alert(result.error);
         setStatusText("Error: " + result.error);
+        console.error(`[PROCESS NEW] Falló subida: ${result.error}`);
         if (onError) onError(result.error);
         return;
     }
 
     if (result.jobId) {
+        console.log(`[PROCESS NEW] Subida exitosa. Job ID: ${result.jobId}. Iniciando polling...`);
+        setStatusText("Subida completada. Procesando...");
+        hideCancelButton(); // La subida de chunks terminó, ya no se puede cancelar
         if (onJobStarted) onJobStarted();
         startJobPolling(result.jobId, onJobCompleted, onError);
     }

@@ -35,25 +35,39 @@ function formatAsHTML(text) {
  */
 function parseMarkdown(markdown) {
     if (!markdown) return "";
+
+    const escapeHtml = (text) => text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    const wrapMarkdownBody = (html) => `<div class="markdown-body">${html}</div>`;
+
     try {
         // Intentar encontrar marked en el ámbito global o window
         const m = (typeof marked !== 'undefined') ? marked : (window.marked || null);
 
         if (m && (typeof m === 'function' || m.parse)) {
             const parseFn = m.parse || m;
-            return parseFn(markdown);
+            return wrapMarkdownBody(parseFn(markdown));
         } else {
             console.warn("marked no está disponible, usando parseador básico");
-            // Fallback muy básico para títulos si falla marked
-            return markdown
+            const basicHtml = escapeHtml(markdown)
+                .replace(/^```([\s\S]*?)```/gm, '<pre><code>$1</code></pre>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
                 .replace(/^# (.*$)/gm, '<h1>$1</h1>')
                 .replace(/^## (.*$)/gm, '<h2>$1</h2>')
                 .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/^-\s+(.*$)/gm, '<li>$1</li>')
+                .replace(/(?:<li>.*<\/li>\s*)+/g, (match) => `<ul>${match}</ul>`)
                 .replace(/\n/g, '<br>');
+            return wrapMarkdownBody(basicHtml);
         }
     } catch (error) {
         console.error("Error parseando markdown:", error);
-        return markdown.replace(/\n/g, '<br>');
+        return wrapMarkdownBody(escapeHtml(markdown).replace(/\n/g, '<br>'));
     }
 }
 

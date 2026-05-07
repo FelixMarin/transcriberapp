@@ -28,6 +28,12 @@ function initializeElements() {
         previewContainer: "previewContainer",
         fileInput: "fileInput",
 
+        // Barra de progreso
+        progressContainer: "progressContainer",
+        progressBar: "progressBar",
+        progressText: "progressText",
+        cancelUploadBtn: "cancelUploadBtn",
+
         // Elementos del chat
         chatToggle: "chatToggle",
         chatPanel: "chatPanel",

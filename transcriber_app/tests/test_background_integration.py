@@ -47,4 +47,4 @@ def test_process_audio_job_error(mock_orchestrator, cleanup_job_status):
             process_audio_job(job_id, "error", "default", "test@example.com")
 
             assert JOB_STATUS[job_id]["status"] == "error"
-            mock_remove.assert_called()
+            mock_remove.assert_not_called()

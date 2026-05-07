@@ -1,0 +1,45 @@
+/* ============================================
+   GRABACIÓN DE AUDIO
+   ============================================ */
+.recorder-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.recorder-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.status-message {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--color-gray-50);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--color-primary);
+    font-weight: 500;
+}
+
+.audio-preview {
+    width: 100%;
+    margin-top: 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-gray-300);
+    display: block !important; /* Forzar bloque */
+}
+
+.preview-container {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: var(--color-gray-50);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    width: 100%;
+}

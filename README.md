@@ -492,6 +492,159 @@ Es una guía completa para reproducir el despliegue en cualquier Jetson con k3s 
 
 ---
 
+# 🔐 Configuración de Autenticación OAuth2
+
+TranscriberApp soporta autenticación mediante OAuth2. Esta sección documenta la configuración necesaria.
+
+## Variables de Entorno Requeridas
+
+Para que el login funcione correctamente, debes configurar las siguientes variables de entorno:
+
+```bash
+# URLs del servidor OAuth2
+PUBLIC_OAUTH2_URL=https://oauth2.tudominio.com      # URL pública para el frontend
+OAUTH2_URL=http://oauth2-server:8080                # URL interna para el backend
+
+# Credenciales del cliente (deben coincidir con las registradas en el servidor OAuth2)
+OAUTH2_CLIENT_ID=transcriberapp
+OAUTH2_CLIENT_SECRET=tu_client_secret
+
+# URI de callback
+PUBLIC_REDIRECT_URI=https://transcriber.tudominio.com/oauth/callback
+```
+
+## Archivos de Configuración
+
+Las variables se encuentran en:
+- `.env` (desarrollo local)
+- `.env.prod` (producción)
+
+Ejemplo en `.env.prod`:
+```bash
+PUBLIC_OAUTH2_URL=https://oauth2.nbes.blog
+OAUTH2_URL=http://oauth2-server-prod:8080
+OAUTH2_CLIENT_ID=transcriberapp
+OAUTH2_CLIENT_SECRET=transcriberapp
+PUBLIC_REDIRECT_URI=https://transcriber.nbes.blog/oauth/callback
+OAUTH2_TOKEN_ENDPOINT=/oauth2/token
+OAUTH2_USERINFO_ENDPOINT=/user/me
+```
+
+## Flujo de Autenticación
+
+El flujo OAuth2 con PKCE funciona así:
+
+1. **Usuario** hace clic en "Iniciar sesión"
+2. **Frontend** llama a `/api/auth/oauth2/start`
+3. **Backend** genera:
+   - `code_verifier` (secreto)
+   - `code_challenge` (hash del verifier)
+   - `state` codificado en Base64URL
+4. **Backend** guarda la sesión en memoria (`OAUTH_SESSIONS`) y devuelve la URL de autorización
+5. **Usuario** es redirigido al servidor OAuth2
+6. **Usuario** se autentica en el servidor OAuth2
+7. **Servidor OAuth2** redirige a `/oauth/callback?code=...&state=...`
+8. **Backend** intercambia el código por tokens y establece cookies de sesión
+9. **Usuario** es redirigido a la página principal
+
+## Arquitectura de Sesiones
+
+### Almacenamiento en Memoria
+
+El `code_verifier` se guarda en un diccionario en memoria (`OAUTH_SESSIONS`) vinculado al `state` codificado. Esto es más seguro que las cookies porque:
+
+- El `code_verifier` nunca se expone al navegador
+- Evita problemas con cookies bloqueadas o no transmitidas
+- Limpieza automática de sesiones expiradas (5 minutos)
+
+**Nota**: En producción con múltiples instancias, considera usar Redis en lugar de memoria local.
+
+### Cookies de Sesión
+
+Tras un login exitoso, se establecen las siguientes cookies:
+
+| Cookie | Descripción | Duración |
+|--------|-------------|----------|
+| `logged_in` | Indica sesión activa | 24 horas |
+| `user_id` | ID del usuario | 24 horas |
+| `email` | Email del usuario | 24 horas |
+| `username` | Nombre de usuario | 24 horas |
+
+Todas las cookies usan:
+- `httponly=True` (no accesibles desde JS)
+- `samesite="lax"` (compatibilidad)
+- `secure=False` (HTTP) o `True` (HTTPS según configuración)
+
+## Configuración del Servidor OAuth2
+
+El servidor OAuth2 debe:
+
+1. **Registrar el cliente** con:
+   - `client_id`: `transcriberapp`
+   - `client_secret`: debe coincidir con `OAUTH2_CLIENT_SECRET`
+   - `redirect_uri`: debe coincidir con `PUBLIC_REDIRECT_URI`
+
+2. **Soportar PKCE** (`code_challenge_method=S256`)
+
+3. **Endpoints requeridos**:
+   - `/oauth2/authorize` - Autorización
+   - `/oauth2/token` - Intercambio de tokens
+   - `/user/me` - Información del usuario
+
+### Prueba del Servidor OAuth2
+
+Puedes verificar que el servidor OAuth2 funciona correctamente:
+
+```bash
+# Intercambiar code por token (desde el servidor)
+curl -X POST http://oauth2-server-prod:8080/oauth2/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -u "transcriberapp:transcriberapp" \
+  -d "grant_type=client_credentials"
+```
+
+Debe devolver `200 OK` con un token.
+
+## Troubleshooting
+
+### Problema: "Sesión expirada o inválida"
+
+**Causa**: El `state` en el callback no coincide con lo guardado.
+
+**Solución**:
+1. Verifica que `OAUTH2_URL`sea accesible desde el contenedor
+2. Revisa los logs buscando `[OAUTH_START] Session stored` y `[OAUTH_CALLBACK] State`
+3. Asegúrate de que el `redirect_uri` coincida exactamente
+
+### Problema: Cookies no se establecen
+
+**Causa**: CORS o configuración de cookies.
+
+**Solución**:
+1. Verifica que `credentials: 'include'` está en el fetch del frontend
+2. Asegúrate de que `expose_headers` incluye `Set-Cookie` en CORS
+3. Revisa la configuración de cookies ( secure, samesite, path)
+
+### Problema: "invalid_client"
+
+**Causa**: Credenciales incorrectas o mal formateadas.
+
+**Solución**:
+1. Verifica que `OAUTH2_CLIENT_SECRET` coincida con el servidor
+2. Usa Basic Auth en el header: `Authorization: Basic base64(client_id:client_secret)`
+3. No envíes `client_id` y `client_secret` en el body
+
+### Problema: Redirección infinita a /login
+
+**Causa**: Cookie `logged_in` no se detecta.
+
+**Solución**:
+1. Verifica que el fetch usa `credentials: 'include'`
+2. Revisa que las cookies tengan `path="/"`
+3. En Chrome DevTools → Application → Cookies, verifica que las cookies existen después del login
+
+---
+
 # 📄 Licencia
 
 MIT

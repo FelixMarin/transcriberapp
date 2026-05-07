@@ -9,6 +9,7 @@ let lastRecordingDuration = null;
 let hasTranscript = false;
 let processedModes = [];
 let currentSessionId = null;
+let currentUploadId = null;
 
 /**
  * Obtiene el ID de la sesión actual
@@ -22,6 +23,27 @@ function getCurrentSessionId() {
  */
 function setCurrentSessionId(id) {
     currentSessionId = id;
+}
+
+/**
+ * Obtiene el uploadId actual
+ */
+function getCurrentUploadId() {
+    return currentUploadId;
+}
+
+/**
+ * Establece el uploadId actual
+ */
+function setCurrentUploadId(id) {
+    currentUploadId = id;
+}
+
+/**
+ * Limpia el uploadId actual
+ */
+function clearCurrentUploadId() {
+    currentUploadId = null;
 }
 
 /**
@@ -116,6 +138,6 @@ function resetAllState() {
 }
 
 export {
-    addProcessedMode, getCurrentSessionId, getHasTranscript, getLastRecordingBlob, getLastRecordingDuration, getLastRecordingName, getProcessedModes, resetAllState, resetProcessedModes, setCurrentSessionId, setHasTranscript, setLastRecordingBlob, setLastRecordingDuration, setLastRecordingName
+    addProcessedMode, clearCurrentUploadId, getCurrentSessionId, getCurrentUploadId, getHasTranscript, getLastRecordingBlob, getLastRecordingDuration, getLastRecordingName, getProcessedModes, resetAllState, resetProcessedModes, setCurrentSessionId, setCurrentUploadId, setHasTranscript, setLastRecordingBlob, setLastRecordingDuration, setLastRecordingName
 };
 

@@ -1,0 +1,72 @@
+/* ============================================
+   PANEL DE HISTORIAL
+   ============================================ */
+.history-panel {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 280px;
+    background-color: white;
+    border-right: 1px solid var(--color-gray-200);
+    z-index: 1000;
+    padding: 1.5rem;
+    transform: translateX(-100%);
+    transition: transform var(--transition-base) ease;
+    overflow-y: auto;
+}
+
+.history-panel.open {
+    transform: translateX(0);
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.history-title {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--color-gray-800);
+}
+
+.history-list {
+    list-style: none;
+}
+
+.history-list li {
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.5rem;
+    background-color: var(--color-gray-50);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast) ease;
+    border-left: 3px solid var(--color-gray-300);
+}
+
+.history-list li:hover {
+    background-color: var(--color-gray-100);
+    border-left-color: var(--color-primary);
+}
+
+.history-list li:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Acciones historial */
+.history-actions {
+    padding: 0px 15px 20px 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+.history-reset-btn {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}

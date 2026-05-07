@@ -1,0 +1,170 @@
+/* ============================================
+   ESTILOS DE BOTONES
+   ============================================ */
+.btn {
+    padding: 0.6rem 1.2rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    font-weight: 400;
+    cursor: pointer;
+    transition: all var(--transition-fast) ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+}
+
+.btn:disabled {
+    background-color: var(--color-gray-100) !important;
+    border-color: var(--color-gray-200) !important;
+    color: var(--color-gray-400) !important;
+    cursor: not-allowed;
+    box-shadow: none !important;
+}
+
+.btn-large {
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--color-primary-dark);
+}
+
+.btn-record {
+    background-color: var(--color-success);
+    color: white;
+}
+
+.btn-record:hover:not(:disabled) {
+    background-color: var(--color-success-dark);
+}
+
+.btn-stop {
+    background-color: var(--color-danger);
+    color: white;
+}
+
+.btn-stop:hover:not(:disabled) {
+    background-color: var(--color-danger-dark);
+}
+
+.btn-delete, .btn-upload {
+    background-color: var(--color-gray-600);
+    color: white;
+}
+
+.btn-delete:hover:not(:disabled), .btn-upload:hover:not(:disabled) {
+    background-color: var(--color-gray-800);
+}
+
+.btn-download {
+    border: 1px solid var(--color-primary);
+    background-color: white;
+    color: var(--color-primary);
+}
+
+.btn-download:hover:not(:disabled) {
+    background-color: var(--color-gray-50);
+}
+
+.btn-print {
+    background-color: var(--color-gray-100);
+    color: var(--color-gray-800);
+    border: 1px solid var(--color-gray-300);
+    margin-bottom: 1rem;
+}
+
+.btn-print:hover {
+    background-color: var(--color-gray-200);
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    color: var(--color-gray-400);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all var(--transition-fast) ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+.btn-close:hover {
+    background-color: var(--color-gray-100);
+    color: var(--color-danger);
+    transform: scale(1.1);
+}
+
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.action-container {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+/* Botón de logout en header */
+.logout-btn {
+    background-color: var(--color-danger);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.875rem;
+    margin-left: 10px;
+}
+
+.logout-btn:hover {
+    background-color: var(--color-danger-dark);
+}
+
+/* Botón de cancelar progreso de subida */
+.btn-cancel-progress {
+    background-color: var(--color-gray-500);
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast) ease;
+    vertical-align: middle;
+    line-height: 1;
+}
+
+.btn-cancel-progress:hover:not(:disabled) {
+    background-color: var(--color-gray-600);
+    transform: scale(1.05);
+}
+
+.btn-cancel-progress:disabled {
+    background-color: var(--color-gray-300);
+    color: var(--color-gray-500);
+    cursor: not-allowed;
+}
+

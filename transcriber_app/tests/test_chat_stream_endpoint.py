@@ -16,9 +16,11 @@ def test_chat_stream_endpoint(monkeypatch):
 
     monkeypatch.setattr(AIManager, "get_agent", lambda mode: mock_agent)
 
+    # Include authentication cookie
     response = client.post(
         "/api/chat/stream",
-        json={"message": "hola", "mode": "default"}
+        json={"message": "hola", "mode": "default"},
+        cookies={"logged_in": "true"}
     )
 
     assert response.status_code == 200

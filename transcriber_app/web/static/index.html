@@ -65,6 +65,10 @@
                         <option value="refinamiento">Refinamiento</option>
                         <option value="ejecutivo">Ejecutivo</option>
                         <option value="bullet">Bullet</option>
+                        <option value="comparative">Comparativo</option>
+                        <option value="product_manager">Product Manager</option>
+                        <option value="project_manager">Project Manager</option>
+                        <option value="quality_assurance">Quality Assurance</option>
                     </select>
                 </div>
             </div>
@@ -73,7 +77,7 @@
         <!-- Grabación de audio -->
         <section id="recorder" class="card recorder-section" aria-labelledby="recorderTitle">
             <h2 id="recorderTitle" class="section-title">Grabación de audio</h2>
-            
+
             <div class="button-group" role="group" aria-label="Controles de grabación">
                 <button id="recordBtn" class="btn btn-record" aria-label="Iniciar grabación">
                     <span aria-hidden="true">🎙️</span> Grabar
@@ -91,22 +95,30 @@
                     <span aria-hidden="true">📂</span> Cargar
                 </button>
             </div>
-            
-            <input type="file" 
-                   id="fileInput" 
-                   accept="audio/*" 
-                   class="visually-hidden" 
+
+            <input type="file"
+                   id="fileInput"
+                   accept="audio/*"
+                   class="visually-hidden"
                    aria-label="Seleccionar archivo de audio">
 
             <p id="status" class="status-message" role="status" aria-live="polite">
                 Esperando grabación…
+                <!-- Barra de progreso de subida -->
+                <div id="progressContainer" class="progress-container hidden" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progreso de subida">
+                    <div id="progressBar" class="progress-bar"></div>
+                    <span id="progressText" class="progress-text">0%</span>
+                </div>                
             </p>
+            <button id="cancelUploadBtn" type="button" class="btn btn-cancel-progress hidden" aria-label="Cancelar subida">
+                Cancelar
+            </button>
 
             <div id="previewContainer" class="preview-container" style="display: none;">
-                <audio id="preview" 
-                       controls 
+                <audio id="preview"
+                       controls
                        preload="auto"
-                       class="audio-preview" 
+                       class="audio-preview"
                        aria-label="Previsualización del audio grabado">
                     Tu navegador no soporta el elemento de audio o no puede reproducir este formato.
                 </audio>
@@ -203,12 +215,6 @@
         <span class="icon" aria-hidden="true">☰</span>
     </button>
 
-    <!-- Overlay de carga -->
-    <div id="overlayLoading" class="overlay-loading hidden" role="status" aria-label="Cargando" aria-live="assertive">
-        <div class="loader" aria-hidden="true"></div>
-        <span class="visually-hidden">Procesando, por favor espere...</span>
-    </div>
-
     <!-- Modal de confirmación para nueva sesión -->
     <div id="modalNuevaSesion" class="modal hidden">
         <div class="modal-content">
@@ -223,7 +229,6 @@
     </div>
 
     <!-- Scripts al final para mejor rendimiento -->
-    <script src="/static/lib/marked.min.js"></script>
-    <script type="module" src="/static/js/main.js?v=033"></script>
-</body>
-</html>
+    <script>window.APP_VERSION = "{{APP_VERSION}}";</script>
+    <script src="/static/lib/marked.min.js?v={{APP_VERSION}}"></script>
+    <script type="module" src="/static/js/main.js?v={{APP_VERSION}}"></script>

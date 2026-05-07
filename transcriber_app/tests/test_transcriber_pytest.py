@@ -12,12 +12,21 @@ def mock_groq_api():
         mock_response.json.return_value = {"text": "simulated transcription from groq"}
         mock_post.return_value = mock_response
 
-        # Mocking ffmpeg call and file operations
-        with patch("transcriber_app.modules.ai.groq.transcriber.ensure_wav", return_value="fake.wav"):
-            with patch("builtins.open", MagicMock()):
-                with patch("transcriber_app.modules.ai.groq.transcriber.os.unlink", MagicMock()):
-                    with patch("transcriber_app.modules.ai.groq.transcriber.GROQ_API_KEY", "fake_key"):
-                        yield mock_post
+        # Mocking instance methods of GroqTranscriber and file operations
+        with patch.object(
+            "transcriber_app.modules.ai.groq.transcriber.GroqTranscriber",
+            "ensure_wav",
+            return_value="fake.wav"
+        ):
+            with patch.object(
+                "transcriber_app.modules.ai.groq.transcriber.GroqTranscriber",
+                "clean_wav",
+                return_value="fake_clean.wav"
+            ):
+                with patch("builtins.open", MagicMock()):
+                    with patch("transcriber_app.modules.ai.groq.transcriber.os.unlink", MagicMock()):
+                        with patch("transcriber_app.modules.ai.groq.transcriber.GROQ_API_KEY", "fake_key"):
+                            yield mock_post
 
 
 def test_transcribe_returns_text(mock_groq_api):

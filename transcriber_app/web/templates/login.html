@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Login - TranscriberApp</title>
+    <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+    <link rel="stylesheet" href="/static/css/login.css">
+</head>
+
+<body>
+    <div class="login-box" id="login-container">
+        <h2>Transcriber<span>App</span></h2>
+        <p class="subtitle">Transcripción inteligente de audio</p>
+        
+        {% if error %}
+            <p class="error-msg">{{ error }}</p>
+        {% endif %}
+        
+        <!-- Botón de OAuth2 -->
+        <button type="button" id="oauth-login-btn" class="oauth-btn">
+            Iniciar sesión
+        </button>
+    </div>
+
+    <script src="/static/js/login.js"></script>
+</body>
+</html>

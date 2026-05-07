@@ -1,0 +1,35 @@
+/* ============================================
+   VARIABLES CSS
+   ============================================ */
+:root {
+    /* Azure-inspired color palette */
+    --color-primary: #0078d4;         /* Azure Blue */
+    --color-primary-dark: #005a9e;
+    --color-success: #107c10;         /* Microsoft Green */
+    --color-success-dark: #0b5a0b;
+    --color-danger: #a4262c;          /* Microsoft Red */
+    --color-danger-dark: #751d1f;
+    --color-warning: #ffb900;
+    
+    --color-gray-50: #f3f2f1;         /* Neutral Lighter */
+    --color-gray-100: #edebe9;        /* Neutral Light */
+    --color-gray-200: #e1dfdd;        /* Neutral Quaternary */
+    --color-gray-300: #d2d0ce;        /* Neutral Tertiary Alt */
+    --color-gray-400: #a19f9d;        /* Neutral Tertiary */
+    --color-gray-600: #605e5c;        /* Neutral Secondary */
+    --color-gray-800: #323130;        /* Neutral Primary */
+    --color-gray-900: #201f1e;        /* Neutral Dark */
+
+    /* Minimalist Sourcing */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.12);
+
+    /* Squared Corners */
+    --radius-sm: 1px;
+    --radius-md: 2px;
+    --radius-lg: 4px;
+
+    --transition-fast: 0.15s;
+    --transition-base: 0.25s;
+}

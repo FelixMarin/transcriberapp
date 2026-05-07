@@ -73,6 +73,10 @@ function triggerFileInput() {
 function handleFileUpload(file, callback) {
     if (!file || !callback) return;
 
+    console.log(`[FILE UPLOAD] Archivo seleccionado: ${file.name}`);
+    console.log(`[FILE UPLOAD] Tamaño: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+    console.log(`[FILE UPLOAD] Tipo MIME: ${file.type}`);
+
     displayAudioPreview(file);
 
     validateForm(file);

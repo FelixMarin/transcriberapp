@@ -41,11 +41,16 @@ def test_upload_audio_endpoint():
     with patch("transcriber_app.web.api.routes.BackgroundTasks.add_task") as mock_task:
         with patch("transcriber_app.web.api.routes.uuid.uuid4") as mock_uuid:
             mock_uuid.return_value = "job456"
-            # Simulate file upload
+            # Simulate file upload with authentication cookie
             files = {"audio": ("test.mp3", b"fake data", "audio/mpeg")}
             data = {"nombre": "test", "modo": "default", "email": "a@b.com"}
 
-            response = client.post("/api/upload-audio", data=data, files=files)
+            response = client.post(
+                "/api/upload-audio",
+                data=data,
+                files=files,
+                cookies={"logged_in": "true"}
+            )
 
             assert response.status_code == 200
             assert response.json()["job_id"] == "job456"

@@ -9,6 +9,10 @@ from .agents import (
     refinamiento_agent,
     bullet_agent,
     default_agent,
+    comparative_agent,
+    product_manager_agent,
+    project_manager_agent,
+    quality_assurance_agent,
 )
 
 # Logging
@@ -32,6 +36,10 @@ class GeminiModel(AIModel):
             "refinamiento": refinamiento_agent,
             "bullet": bullet_agent,
             "default": default_agent,
+            "comparative": comparative_agent,
+            "product_manager": product_manager_agent,
+            "project_manager": project_manager_agent,
+            "quality_assurance": quality_assurance_agent,
         }
 
     def run_agent(self, mode: str, text: str, stream: bool = False):

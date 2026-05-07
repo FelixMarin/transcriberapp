@@ -1,0 +1,27 @@
+/* ============================================
+   ESTILOS DE LAYOUT PRINCIPAL
+   ============================================ */
+body {
+    background-color: var(--color-gray-50);
+    color: var(--color-gray-600);
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    transition: margin var(--transition-base) ease;
+}
+
+body.history-open {
+    margin-left: 280px;
+}
+
+body.chat-open {
+    margin-right: 350px;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}

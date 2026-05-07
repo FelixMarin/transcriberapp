@@ -3,25 +3,33 @@
  * Coordina todos los módulos y configura event listeners
  */
 
-import { elements, validateElements } from "./modules/domElements.js";
-import {
-    handleSendAudio,
-    setupBeforeUnloadHandler,
-    setupChatHandlers,
-    setupCollapsibleHandlers,
-    setupFileHandlers,
-    setupFormHandlers,
-    setupHistoryHandlers,
-    setupModalHandlers,
-    setupPrintHandler,
-    setupRecordingHandlers
-} from "./modules/eventHandlers.js";
-import { updateRecordingButtonsState } from "./modules/ui.js";
+const APP_VERSION = window.APP_VERSION;
+console.log(window.APP_VERSION)
 
 /**
  * Inicializa toda la aplicación
  */
-function init() {
+async function init() {
+    // Cargar módulos con cache busting
+    const { elements, validateElements } = await import(`./modules/domElements.js?v=${APP_VERSION}`);
+    const eventHandlers = await import(`./modules/eventHandlers.js?v=${APP_VERSION}`);
+    const { updateRecordingButtonsState } = await import(`./modules/ui.js?v=${APP_VERSION}`);
+
+    // Extraer funciones de eventHandlers
+    const {
+        handleSendAudio,
+        setupBeforeUnloadHandler,
+        setupCancelHandler,
+        setupChatHandlers,
+        setupCollapsibleHandlers,
+        setupFileHandlers,
+        setupFormHandlers,
+        setupHistoryHandlers,
+        setupModalHandlers,
+        setupPrintHandler,
+        setupRecordingHandlers
+    } = eventHandlers;
+
     validateElements();
 
     if (elements.nameWarning) elements.nameWarning.hidden = false;
@@ -39,6 +47,7 @@ function init() {
     setupPrintHandler();
     setupBeforeUnloadHandler();
     setupModalHandlers();
+    setupCancelHandler();
     setupCollapsibleHandlers();
 
     // Asignar manejador principal de envío de audio

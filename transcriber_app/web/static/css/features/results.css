@@ -1,0 +1,43 @@
+/* ============================================
+   RESULTADOS MÚLTIPLES
+   ============================================ */
+.result-box {
+    margin-bottom: 1rem;
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.result-box summary {
+    padding: 1rem;
+    background-color: var(--color-gray-50);
+    font-weight: 600;
+    color: var(--color-gray-600);
+    cursor: pointer;
+    transition: background-color var(--transition-fast) ease;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.result-box summary:hover {
+    background-color: var(--color-gray-100);
+}
+
+.result-box summary::before {
+    content: "▶";
+    font-size: 0.8rem;
+    transition: transform var(--transition-base) ease;
+}
+
+.result-box[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.result-box .markdown-body {
+    max-height: none;
+    border: none;
+    border-top: 1px solid var(--color-gray-200);
+    margin: 0;
+}

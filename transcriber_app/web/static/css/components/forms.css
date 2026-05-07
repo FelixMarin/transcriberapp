@@ -1,0 +1,62 @@
+/* ============================================
+   ESTILOS DE FORMULARIOS
+   ============================================ */
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--color-gray-600);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-gray-400);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    transition: border-color var(--transition-fast) ease;
+    background-color: white;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.form-control#nombre {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.warning-text {
+    color: var(--color-danger);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+.warning-text:not([hidden]) {
+    display: block;
+}
+
+.warning-text[hidden] {
+    display: none;
+}
+
+.form-row-horizontal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+/* Estados de validación */
+.form-control:invalid:not(:focus):not(:placeholder-shown) {
+    border-color: var(--color-danger);
+}
+
+.form-control:invalid:not(:focus):not(:placeholder-shown) + .warning-text {
+    display: block;
+}

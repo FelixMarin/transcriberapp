@@ -3,9 +3,17 @@
 import os
 from transcriber_app.modules.logging.logging_config import setup_logging
 from transcriber_app.modules.ai.ai_manager import AIManager, log_agent_result
+from transcriber_app.modules.ffmpeg_client import validate_audio
 
 # Logging
 logger = setup_logging("transcribeapp")
+
+
+class AudioValidationError(Exception):
+    """Excepción cuando el audio no pasa la validación."""
+    def __init__(self, message, validation_result=None):
+        super().__init__(message)
+        self.validation_result = validation_result
 
 
 class Orchestrator:
@@ -22,26 +30,80 @@ class Orchestrator:
         # 1. Cargar audio
         audio_info = self.receiver.load(audio_path)
 
-        # 2. Transcribir
+        # 2. Validar audio antes de transcripción
+        logger.info(f"[ORCHESTRATOR] Validando audio: {audio_info['path']}")
+        try:
+            validation_result = validate_audio(audio_info["path"])
+        except Exception as e:
+            logger.warning(f"[ORCHESTRATOR] Error al validar audio: {e}. Continuando con transcripción.")
+            validation_result = {"valid": True, "issues": [], "warnings": []}
+
+        if not validation_result.get("valid", False):
+            issues = validation_result.get("issues", [])
+            warnings = validation_result.get("warnings", [])
+            non_length_issues = [
+                issue for issue in issues
+                if "demasiado largo" not in issue.lower() and "too long" not in issue.lower()
+            ]
+
+            if non_length_issues:
+                error_msg = f"Audio no válido: {', '.join(non_length_issues)}" if non_length_issues else "Audio no válido"
+                logger.error(f"[ORCHESTRATOR] {error_msg}")
+                raise AudioValidationError(error_msg, validation_result)
+
+            logger.warning(
+                f"[ORCHESTRATOR] Audio marcado como inválido solo por duración; se continuará con la transcripción."
+            )
+            validation_result["valid"] = True
+            validation_result["optimal"] = False
+            validation_result["warnings"] = warnings + [
+                issue for issue in issues
+                if "demasiado largo" in issue.lower() or "too long" in issue.lower()
+            ]
+
+        if validation_result.get("warnings"):
+            logger.warning(f"[ORCHESTRATOR] Advertencias de validación: {validation_result['warnings']}")
+
+        # 3. Transcribir
         text, metadata = self.transcriber.transcribe(audio_info["path"])
         logger.info(f"[ORCHESTRATOR] Metadata de transcripción: {metadata}")
 
-        # 3. Guardar transcripción
+        # 4. Guardar transcripción en texto plano en /app/transcripts
         safe_name = audio_info["name"].lower()
         self.formatter.save_transcription(safe_name, text, enforce_save=self.save_files)
 
-        # 4. Resumir con Gemini (nuevo sistema)
+        # 5. Eliminar archivo de audio original para liberar espacio
+        self._cleanup_audio_file(audio_info["path"])
+
+        # 6. Resumir con Gemini (nuevo sistema)
         summary_output = AIManager.summarize(text, mode)
 
-        # 5. Log básico del agente
+        # 7. Log básico del agente
         log_agent_result(summary_output)
 
-        # 6. Guardar métricas (SIEMPRE se guardan)
+        # 8. Guardar métricas (SIEMPRE se guardan)
         self.formatter.save_metrics(audio_info["name"], summary_output, mode)
 
-        # 7. Guardar salida final
+        # 9. Guardar salida final
         output_file = self.formatter.save_output(audio_info["name"], summary_output, mode, enforce_save=self.save_files)
         return (output_file, text, summary_output)
+
+    def _cleanup_audio_file(self, audio_path: str) -> None:
+        """
+        Elimina el archivo de audio original después de la transcripción.
+        
+        Args:
+            audio_path: Ruta al archivo de audio a eliminar
+        """
+        if os.path.exists(audio_path):
+            try:
+                file_size = os.path.getsize(audio_path)
+                os.unlink(audio_path)
+                logger.info(f"[ORCHESTRATOR] Audio original eliminado: {audio_path} ({file_size} bytes)")
+            except Exception as e:
+                logger.warning(f"[ORCHESTRATOR] No se pudo eliminar el audio {audio_path}: {e}")
+        else:
+            logger.warning(f"[ORCHESTRATOR] Audio no encontrado para eliminar: {audio_path}")
 
     def run_text(self, text_path, mode="default"):
         logger.info(f"[ORCHESTRATOR] Ejecutando flujo de texto para: {text_path} con modo: {mode}")

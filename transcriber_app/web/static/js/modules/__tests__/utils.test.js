@@ -48,12 +48,13 @@ describe("utils.js", () => {
             expect(parseMarkdown(null)).toBe("");
         });
 
-        it("debe devolver <pre> si marked no está disponible", () => {
+        it("debe devolver contenido HTML envuelto en markdown-body si marked no está disponible", () => {
             const original = global.marked;
             global.marked = undefined;
 
             const result = parseMarkdown("# Título");
-            expect(result).toContain("<pre>");
+            expect(result).toContain("<div class=\"markdown-body\">");
+            expect(result).toContain("<h1>Título</h1>");
 
             global.marked = original;
         });

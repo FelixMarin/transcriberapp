@@ -1,0 +1,101 @@
+/* 
+ * Estilos para la página de login
+ * TranscriberApp
+ */
+
+:root {
+    --color-primary: #0078d4;
+    --color-primary-dark: #005a9e;
+    --color-danger: #a4262c;
+    --color-gray-50: #f3f2f1;
+    --color-gray-200: #e1dfdd;
+    --color-gray-600: #605e5c;
+    --color-gray-900: #201f1e;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.login-box {
+    background: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.login-box h2 {
+    color: var(--color-gray-900);
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+}
+
+.login-box h2 span {
+    color: var(--color-primary);
+}
+
+.login-box .subtitle {
+    color: var(--color-gray-600);
+    margin-bottom: 30px;
+    font-size: 0.9rem;
+}
+
+.oauth-btn {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: var(--color-primary);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.oauth-btn:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+}
+
+.oauth-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.error-msg {
+    color: var(--color-danger);
+    background: #fdecea;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+}
+
+.loading h2 {
+    color: var(--color-gray-900);
+    margin-bottom: 10px;
+}
+
+.loading p {
+    color: var(--color-gray-600);
+}

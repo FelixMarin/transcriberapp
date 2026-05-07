@@ -11,6 +11,7 @@ import {
     getLastRecordingName,
     getProcessedModes,
     resetAllState,
+    setCurrentSessionId,
     setHasTranscript,
     setLastRecordingBlob,
     setLastRecordingDuration,
@@ -18,7 +19,8 @@ import {
 } from "./appState.js";
 
 import {
-    processExistingTranscription
+    processExistingTranscription,
+    cancelUpload
 } from "./api.js";
 import {
     processNewRecording
@@ -50,7 +52,9 @@ import {
 } from "./recording.js";
 import {
     clearTranscriptionAndResults,
+    hideCancelButton,
     setStatusText,
+    showCancelButton,
     updateRecordingButtonsState,
     updateResetButtonState,
     updateSendButtonState
@@ -161,6 +165,15 @@ function resetUI() {
     clearChatHistory();
     updateRecordingButtonsState(false);  // Sin audio
     resetAllState();
+
+    // Asegurar que la barra de progreso y el botón de cancelar estén ocultos
+    if (elements.progressContainer) {
+        elements.progressContainer.classList.add("hidden");
+    }
+    if (elements.cancelUploadBtn) {
+        elements.cancelUploadBtn.classList.add("hidden");
+        elements.cancelUploadBtn.disabled = true;
+    }
 }
 
 /**
@@ -174,82 +187,92 @@ async function handleSendAudio() {
         return;
     }
 
-    // CASO 1: Ya existe transcripción → reutilizar
-    if (getHasTranscript() && getLastRecordingName() === nombre) {
-        // Intentar obtener el texto de la transcripción actual para mandarlo al back (si ya no hay archivos)
-        const currentTranscript = elements.transcripcionTexto?.innerText || "";
-        const result = await processExistingTranscription(nombre, modo, currentTranscript);
-
-        if (result.success) {
-            // Actualizar UI principal
-            // Actualizar UI principal
-            // (La visibilidad ahora se gestiona dentro de addResultBox)
-
-            // Añadir a la lista de resultados múltiples
-            addResultBox(result.mode, result.content);
-            addProcessedMode(result.mode);
-
-            updateSendButtonState(
-                !!getLastRecordingBlob(),
-                ...Object.values(getFormValues()),
-                getProcessedModes()
-            );
-
-            // Guardar en historial (fusión)
-            // Pasamos explícitamente contenido y modo
-            await saveToHistoryIfComplete(result.content, result.mode);
-
-            // Auto-scroll a resultados
-            setTimeout(() => {
-                const resultSection = document.getElementById("result");
-                if (resultSection) {
-                    resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            }, 100);
-
-        } else {
-            alert(result.error);
-        }
-        return;
+    // Deshabilitar botón para evitar envíos múltiples
+    if (elements.sendBtn) {
+        elements.sendBtn.disabled = true;
     }
 
-    // CASO 2: Primera vez → enviar audio
-    await processNewRecording(
-        getLastRecordingBlob(),
-        nombre,
-        email,
-        modo,
-        async () => {
-            setLastRecordingName(nombre);
-            setHasTranscript(true);
-            addProcessedMode(modo);
-            updateSendButtonState(
-                !!getLastRecordingBlob(),
-                ...Object.values(getFormValues()),
-                getProcessedModes()
-            );
-        },
-        async (data) => {
-            // onJobCompleted: save to history after processing
-            // 'data' ahora trae 'markdown' asegurado por el fix en audioProcessing.js
-            const mdContent = data?.markdown || data?.resultado || "";
-            const currentMode = elements.modo?.value || "default";
+    try {
+        // CASO 1: Ya existe transcripción → reutilizar
+        if (getHasTranscript() && getLastRecordingName() === nombre) {
+            const currentTranscript = elements.transcripcionTexto?.innerText || "";
+            const result = await processExistingTranscription(nombre, modo, currentTranscript);
 
-            // Renderizar inmediatamente
-            addResultBox(currentMode, mdContent);
-            addProcessedMode(currentMode);
+            if (result.success) {
+                addResultBox(result.mode, result.content);
+                addProcessedMode(result.mode);
 
-            await saveToHistoryIfComplete(mdContent, currentMode);
+                updateSendButtonState(
+                    !!getLastRecordingBlob(),
+                    ...Object.values(getFormValues()),
+                    getProcessedModes()
+                );
 
-            // Auto-scroll a resultados
-            setTimeout(() => {
-                const resultSection = document.getElementById("result");
-                if (resultSection) {
-                    resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Habilitar botón del chat
+                if (elements.chatToggle) elements.chatToggle.disabled = false;
+
+                await saveToHistoryIfComplete(result.content, result.mode);
+
+                // Auto-scroll a resultados
+                setTimeout(() => {
+                    const resultSection = document.getElementById("result");
+                    if (resultSection) {
+                        resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
+
+            } else {
+                alert(result.error);
+            }
+        } else {
+            // CASO 2: Primera vez → enviar audio
+            await processNewRecording(
+                getLastRecordingBlob(),
+                nombre,
+                email,
+                modo,
+                async () => {
+                    setLastRecordingName(nombre);
+                    setHasTranscript(true);
+                    addProcessedMode(modo);
+                    updateSendButtonState(
+                        !!getLastRecordingBlob(),
+                        ...Object.values(getFormValues()),
+                        getProcessedModes()
+                    );
+                },
+                async (data) => {
+                    // onJobCompleted: save to history after processing
+                    const mdContent = data?.markdown || data?.resultado || "";
+                    const currentMode = elements.modo?.value || "default";
+
+                    // Renderizar inmediatamente
+                    addResultBox(currentMode, mdContent);
+                    addProcessedMode(currentMode);
+
+                    // Habilitar botón del chat
+                    if (elements.chatToggle) elements.chatToggle.disabled = false;
+
+                    await saveToHistoryIfComplete(mdContent, currentMode);
+
+                    // Auto-scroll a resultados
+                    setTimeout(() => {
+                        const resultSection = document.getElementById("result");
+                        if (resultSection) {
+                            resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }, 100);
                 }
-            }, 100);
+            );
         }
-    );
+    } finally {
+        // Asegurar que el estado del botón se actualiza siempre
+        updateSendButtonState(
+            !!getLastRecordingBlob(),
+            ...Object.values(getFormValues()),
+            getProcessedModes()
+        );
+    }
 }
 
 /**
@@ -342,6 +365,34 @@ function setupFormHandlers() {
                 getProcessedModes()
             );
         });
+    }
+}
+
+/**
+ * Configura el botón de cancelar subida
+ */
+function setupCancelHandler() {
+    if (elements.cancelUploadBtn) {
+        elements.cancelUploadBtn.onclick = async () => {
+            // Deshabilitar botón para evitar clics múltiples
+            elements.cancelUploadBtn.disabled = true;
+            setStatusText("Cancelando subida...");
+
+            const result = await cancelUpload();
+
+            if (result.success) {
+                hideProgressBar();
+                hideCancelButton();
+                setStatusText("Subida cancelada. Los chunks han sido eliminados.");
+                // Limpiar estado de audio grabado
+                // (No hay blob válido aún, pero reseteamos el formulario si queremos)
+            } else {
+                alert(result.error);
+                setStatusText("Error al cancelar: " + result.error);
+                // Rehabilitar botón si falló la cancelación
+                elements.cancelUploadBtn.disabled = false;
+            }
+        };
     }
 }
 
@@ -549,6 +600,6 @@ function setupCollapsibleHandlers() {
 }
 
 export {
-    handleSendAudio, resetUI, saveToHistoryIfComplete, setupBeforeUnloadHandler, setupChatHandlers, setupCollapsibleHandlers, setupFileHandlers, setupFormHandlers, setupHistoryHandlers, setupModalHandlers, setupPrintHandler, setupRecordingHandlers
+    handleSendAudio, resetUI, saveToHistoryIfComplete, setupBeforeUnloadHandler, setupCancelHandler, setupChatHandlers, setupCollapsibleHandlers, setupFileHandlers, setupFormHandlers, setupHistoryHandlers, setupModalHandlers, setupPrintHandler, setupRecordingHandlers
 };
 

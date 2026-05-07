@@ -109,8 +109,8 @@ async function sendMessage() {
 
             textoFinal += parcial;
 
-            // Mostrar texto en vivo sin parsear markdown
-            if (aiMsg) aiMsg.innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word; font-family: inherit;">${textoFinal}</pre>`;
+            // Mostrar texto en vivo sin parsear markdown para evitar raw markdown en el chat
+            if (aiMsg) aiMsg.innerHTML = formatAsHTML(textoFinal);
         }
 
         // Cuando termina el streaming → renderizamos markdown completo

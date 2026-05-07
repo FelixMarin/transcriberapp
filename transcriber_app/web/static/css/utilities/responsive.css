@@ -1,0 +1,77 @@
+/* ============================================
+   RESPONSIVIDAD
+   ============================================ */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .app-title {
+        font-size: 1.8rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .session-status {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.8rem 0.25rem 0.6rem;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%);
+    }
+    
+    body.chat-open .session-status {
+        right: 85%;
+    }
+    
+    .form-row-horizontal {
+        grid-template-columns: 1fr;
+    }
+    
+    .history-panel,
+    .chat-panel {
+        width: 85%;
+    }
+    
+    body.history-open,
+    body.chat-open {
+        margin-left: 0;
+        margin-right: 0;
+    }
+    
+    .history-close {
+        display: block;
+    }
+    
+    body.history-open .history-toggle {
+        display: none;
+    }
+    
+    .button-group {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .app-title {
+        font-size: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+    }
+    
+    .floating-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+    }
+    
+    .chat-toggle {
+        width: 55px;
+        height: 55px;
+    }
+}

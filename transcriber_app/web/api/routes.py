@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, Form, BackgroundTasks, HTTPException, Request
 from fastapi.responses import StreamingResponse, FileResponse
 from transcriber_app.modules.ai.ai_manager import AIManager
+from transcriber_app.modules.ai.gemini.agents import chat_agent
 from transcriber_app.runner.orchestrator import Orchestrator
 from transcriber_app.modules.output_formatter import OutputFormatter
 from transcriber_app.modules.audio_receiver import AudioReceiver
@@ -158,17 +159,39 @@ def get_status(job_id: str):
 async def chat_stream(request: Request, payload: dict):
     if not check_auth(request):
         raise HTTPException(status_code=401, detail="Autenticación requerida")
+
     message = payload.get("message", "")
-    mode = payload.get("mode", "default")
-    agent = AIManager.get_agent(mode)
+    transcripcion = payload.get("transcripcion", "")
+    resumen = payload.get("resumen", "")
+    history = payload.get("history", [])  # [{"role": "user"|"assistant", "content": "..."}]
+
+    context_block = ""
+    if transcripcion:
+        context_block += f"## Transcripción original\n{transcripcion}\n\n"
+    if resumen:
+        context_block += f"## Análisis procesado\n{resumen}\n\n"
+
+    # Build the full prompt: context + history + current question
+    history_block = ""
+    for turn in history[:-1]:  # exclude the current message (last user turn)
+        role = "Usuario" if turn.get("role") == "user" else "Asistente"
+        history_block += f"**{role}:** {turn.get('content', '')}\n\n"
+
+    full_prompt = ""
+    if context_block:
+        full_prompt += f"{context_block}---\n\n"
+    if history_block:
+        full_prompt += f"## Historial de conversación\n{history_block}---\n\n"
+    full_prompt += f"## Pregunta actual\n{message}"
 
     async def chat_stream_gen():
         try:
-            for chunk in agent.run(message, stream=True):
+            for chunk in chat_agent.run(full_prompt, stream=True):
                 if chunk:
                     yield chunk
         except Exception as e:
             yield f"\n[Error: {str(e)}]"
+
     return StreamingResponse(chat_stream_gen(), media_type="text/plain")
 
 

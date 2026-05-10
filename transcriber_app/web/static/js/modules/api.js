@@ -354,10 +354,12 @@ async function loadTranscriptionFile(nombre) {
 /**
  * Stream de chat desde el servidor
  */
-async function* chatStream(message, mode, transcripcion, resumen) {
+async function* chatStream(message, mode, transcripcion, resumen, history = []) {
     const payload = {
-        message: `Transcripción original:\n${transcripcion}\n\nResultado procesado:\n${resumen}\n\nMi pregunta es:\n${message}`,
-        mode: mode
+        message,
+        transcripcion,
+        resumen,
+        history,
     };
 
     const response = await fetch("/api/chat/stream", {

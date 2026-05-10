@@ -101,7 +101,7 @@ async function sendMessage() {
         let textoFinal = "";
         let isFirstChunk = true;
 
-        for await (const parcial of chatStream(msg, modo, transcripcion, resumen)) {
+        for await (const parcial of chatStream(msg, modo, transcripcion, resumen, [...chatHistory])) {
             if (isFirstChunk) {
                 hideOverlay();
                 isFirstChunk = false;

@@ -7,6 +7,7 @@ from .comparative_agent import comparative_agent
 from .product_manager_agent import product_manager_agent
 from .project_manager_agent import project_manager_agent
 from .quality_assurance_agent import quality_assurance_agent
+from .chat_agent import chat_agent
 
 __all__ = [
     "tecnico_agent",
@@ -18,4 +19,5 @@ __all__ = [
     "product_manager_agent",
     "project_manager_agent",
     "quality_assurance_agent",
+    "chat_agent",
 ]

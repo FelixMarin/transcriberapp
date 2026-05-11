@@ -11,6 +11,8 @@ import {
 } from "./api.js";
 import { elements } from "./domElements.js";
 import {
+    disableUploadControls,
+    enableUploadControls,
     hideCancelButton,
     hideProgressBar,
     setProgressBar,
@@ -29,7 +31,8 @@ function startJobPolling(jobId, onComplete, onError) {
         try {
             const data = await checkJobStatus(jobId);
 
-            setStatusText(getStatusMessage(data.status));
+            const displayText = data.message || getStatusMessage(data.status);
+            setStatusText(displayText);
 
             if (data.status === "processing" || data.status === "running") {
                 setTimeout(checkStatus, 3000);
@@ -112,15 +115,33 @@ async function processNewRecording(audioBlob, nombre, email, modo, onJobStarted,
     console.log(`  Email: ${email}`);
     console.log(`  Tamaño blob: ${(audioBlob.size / 1024 / 1024).toFixed(2)} MB`);
 
-    // Mostrar barra de progreso y botón de cancelar al iniciar
     showProgressBar();
     setProgressBar(0);
     setStatusText("Preparando subida...");
     showCancelButton();
+    disableUploadControls();
 
-    const result = await uploadAudio(audioBlob, nombre, modo, email);
+    let result;
+    try {
+        result = await uploadAudio(audioBlob, nombre, modo, email);
+    } catch (err) {
+        // Cancelación u otro error durante la subida
+        enableUploadControls(!!audioBlob);
+        hideProgressBar();
+        hideCancelButton();
+        if (err?.name !== "AbortError") {
+            setStatusText("Error en la subida.");
+            if (onError) onError(err);
+        } else {
+            setStatusText("Subida cancelada.");
+        }
+        return;
+    }
 
     if (!result.success) {
+        enableUploadControls(!!audioBlob);
+        hideProgressBar();
+        hideCancelButton();
         alert(result.error);
         setStatusText("Error: " + result.error);
         console.error(`[PROCESS NEW] Falló subida: ${result.error}`);
@@ -131,7 +152,9 @@ async function processNewRecording(audioBlob, nombre, email, modo, onJobStarted,
     if (result.jobId) {
         console.log(`[PROCESS NEW] Subida exitosa. Job ID: ${result.jobId}. Iniciando polling...`);
         setStatusText("Subida completada. Procesando...");
-        hideCancelButton(); // La subida de chunks terminó, ya no se puede cancelar
+        hideCancelButton();
+        // Durante el procesamiento backend los botones de audio se pueden usar (el fichero ya está en el servidor)
+        enableUploadControls(!!audioBlob);
         if (onJobStarted) onJobStarted();
         startJobPolling(result.jobId, onJobCompleted, onError);
     }

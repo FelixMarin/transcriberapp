@@ -32,7 +32,7 @@ class AudioValidationError(Exception):
 
 class GroqTranscriber(TranscriberInterface):
     URL = os.getenv("GROQ_API_URL", "")
-    MODEL = os.getenv("GROQ_MODEL_TRANSCRIBER", "whisper-large-v3")
+    MODEL = os.getenv("GROQ_MODEL_TRANSCRIBER", "whisper-large-v3-turbo")
 
     def __init__(self, skip_validation: bool = False):
         """
@@ -199,49 +199,81 @@ class GroqTranscriber(TranscriberInterface):
             raise
 
     def _send_file_to_groq(self, file_path: str, filename: str, content_type: str) -> Tuple[str, float]:
-        """Envía un archivo de audio a Groq API y devuelve el texto transcrito y el tiempo de envío."""
+        """Envía un archivo de audio a Groq API y devuelve el texto transcrito y el tiempo de envío.
+
+        Reintenta automáticamente en caso de 429 (rate limit) con backoff exponencial.
+        """
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Archivo no encontrado para enviar a Groq: {file_path}")
 
-        start = time.time()
         final_size = os.path.getsize(file_path)
-        logger.info(f"[GROQ] Enviando {filename} a Groq: {file_path}, tamaño={final_size} bytes")
+        size_mb = final_size / (1024 * 1024)
 
         try:
             result = subprocess.run(
                 ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", file_path],
-                capture_output=True,
-                text=True,
-                timeout=10
+                capture_output=True, text=True, timeout=10
             )
             if result.returncode == 0:
                 info = json.loads(result.stdout)
                 duration = float(info["format"].get("duration", 0))
-                logger.info(f"[GROQ] Duración del audio a enviar: {duration:.2f} segundos")
+                logger.info(
+                    f"[GROQ] Preparando envío: {filename} | "
+                    f"tamaño={size_mb:.2f} MB ({final_size} bytes) | "
+                    f"duración={duration:.1f}s"
+                )
                 if duration < 0.5:
-                    logger.error(f"[GROQ] ¡Audio demasiado corto! {duration:.2f} segundos")
                     raise Exception(f"Audio demasiado corto: {duration:.2f} segundos")
+            else:
+                logger.info(
+                    f"[GROQ] Preparando envío: {filename} | "
+                    f"tamaño={size_mb:.2f} MB ({final_size} bytes) | duración=desconocida"
+                )
         except Exception as e:
             logger.warning(f"[GROQ] No se pudo verificar duración: {e}")
+            logger.info(f"[GROQ] Preparando envío: {filename} | tamaño={size_mb:.2f} MB ({final_size} bytes)")
 
-        with open(file_path, "rb") as f:
-            logger.info("[GROQ] Enviando petición a Groq API...")
-            resp = requests.post(
-                self.URL,
-                headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
-                data={"model": self.MODEL},
-                files={"file": (filename, f, content_type)},
-                timeout=300
-            )
+        max_retries = 5
+        base_wait = 30  # segundos; Groq suele pedir ~30s de espera en 429
+
+        start = time.time()
+        for attempt in range(1, max_retries + 1):
+            with open(file_path, "rb") as f:
+                logger.info(f"[GROQ] Enviando a Groq API (intento {attempt}/{max_retries})...")
+                resp = requests.post(
+                    self.URL,
+                    headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+                    data={"model": self.MODEL},
+                    files={"file": (filename, f, content_type)},
+                    timeout=300
+                )
+
+            logger.info(f"[GROQ] Respuesta status: {resp.status_code}")
+
+            if resp.status_code == 429:
+                # Respetar Retry-After si lo devuelve Groq, si no usar backoff exponencial
+                retry_after = int(resp.headers.get("Retry-After", 0))
+                wait = retry_after if retry_after > 0 else base_wait * attempt
+                logger.warning(
+                    f"[GROQ] Rate limit (429) en intento {attempt}/{max_retries}. "
+                    f"Esperando {wait}s antes de reintentar..."
+                )
+                if attempt < max_retries:
+                    time.sleep(wait)
+                    continue
+                # Agotados los reintentos
+                logger.error(f"[GROQ] Rate limit persistente tras {max_retries} intentos: {resp.text}")
+                resp.raise_for_status()
+
+            if resp.status_code != 200:
+                logger.error(f"[GROQ] Error en respuesta: {resp.text}")
+                resp.raise_for_status()
+
+            break  # éxito
 
         elapsed = time.time() - start
-        logger.info(f"[GROQ] Respuesta status: {resp.status_code}")
-        if resp.status_code != 200:
-            logger.error(f"[GROQ] Error en respuesta: {resp.text}")
-            resp.raise_for_status()
-
         text = resp.json().get("text", "").strip()
-        logger.info(f"[GROQ] Texto recibido: '{text[:100]}...' (longitud: {len(text)} caracteres)")
+        logger.info(f"[GROQ] Texto recibido: '{text[:100]}...' (longitud: {len(text)} caracteres, tiempo total: {elapsed:.1f}s)")
 
         if not text:
             logger.warning(f"[GROQ] ¡Texto vacío recibido de Groq para {filename}!")
@@ -256,41 +288,65 @@ class GroqTranscriber(TranscriberInterface):
     def _send_to_groq_mp3(self, mp3_path: str) -> Tuple[str, float]:
         return self._send_file_to_groq(mp3_path, "audio.mp3", "audio/mpeg")
 
-    def _send_to_groq_chunks(self, chunk_paths: list[str]) -> Tuple[str, float]:
-        """Envía varios MP3 chunks a Groq y concatena los resultados."""
+    def _send_to_groq_chunks(self, chunk_paths: list[str], on_chunk_done=None) -> Tuple[str, float]:
+        """Envía varios MP3 chunks a Groq y concatena los resultados.
+
+        on_chunk_done(idx, total): callback opcional llamado tras cada chunk transcrito.
+        """
         all_texts = []
         total_time = 0.0
-        logger.info(f"[GROQ] Enviando {len(chunk_paths)} chunks a Groq... ")
+        total = len(chunk_paths)
+        logger.info(f"[GROQ] Enviando {total} chunks a Groq...")
 
         for idx, chunk_path in enumerate(chunk_paths, start=1):
-            logger.info(f"[GROQ] Enviando chunk {idx}/{len(chunk_paths)}: {chunk_path}")
+            logger.info(f"[GROQ] Enviando chunk {idx}/{total}: {chunk_path}")
             text, elapsed = self._send_to_groq_mp3(chunk_path)
             all_texts.append(text)
             total_time += elapsed
-            logger.info(f"[GROQ] Chunk {idx} completado en {elapsed:.2f}s")
+            logger.info(f"[GROQ] Chunk {idx}/{total} completado en {elapsed:.2f}s")
+            if on_chunk_done:
+                on_chunk_done(idx, total)
 
         combined_text = "\n".join([t for t in all_texts if t])
         logger.info(f"[GROQ] Texto combinado de chunks: {len(combined_text)} caracteres")
         return combined_text, total_time
 
     def _cleanup_chunked_files(self, chunked: dict) -> None:
-        """Elimina archivos temporales generados por el endpoint chunked."""
+        """Elimina archivos y directorios temporales generados por el chunking."""
+        import shutil
+
         chunks = chunked.get("chunks", []) or []
         original_mp3 = chunked.get("original_mp3")
 
+        # Recopilar directorios únicos para limpiarlos enteros si son temporales
+        tmp_dirs = set()
+        for p in chunks + ([original_mp3] if original_mp3 else []):
+            if p:
+                parent = os.path.dirname(p)
+                if os.path.basename(parent).startswith("groq_chunks_"):
+                    tmp_dirs.add(parent)
+
+        for tmp_dir in tmp_dirs:
+            try:
+                if os.path.exists(tmp_dir):
+                    shutil.rmtree(tmp_dir)
+                    logger.info(f"[GROQ] Eliminado directorio temporal: {tmp_dir}")
+            except Exception as e:
+                logger.warning(f"[GROQ] No se pudo eliminar directorio temporal {tmp_dir}: {e}")
+
+        # Para chunks que no estén en un directorio temporal propio (caso remoto)
         for chunk_path in chunks:
             try:
                 if chunk_path and os.path.exists(chunk_path):
                     os.unlink(chunk_path)
                     logger.info(f"[GROQ] Eliminado chunk temporal: {chunk_path}")
-            except Exception as e:
-                logger.warning(f"[GROQ] No se pudo eliminar chunk temporal {chunk_path}: {e}")
+            except Exception:
+                pass
 
-        if original_mp3:
+        if original_mp3 and os.path.exists(original_mp3):
             try:
-                if os.path.exists(original_mp3):
-                    os.unlink(original_mp3)
-                    logger.info(f"[GROQ] Eliminado MP3 original temporal: {original_mp3}")
+                os.unlink(original_mp3)
+                logger.info(f"[GROQ] Eliminado MP3 original temporal: {original_mp3}")
             except Exception as e:
                 logger.warning(f"[GROQ] No se pudo eliminar MP3 temporal {original_mp3}: {e}")
 
@@ -355,10 +411,13 @@ class GroqTranscriber(TranscriberInterface):
             if chunked and chunked.get("chunks"):
                 chunks = chunked.get("chunks", [])
                 logger.info(f"[GROQ] Usando chunked MP3 para audio grande: {len(chunks)} fragments")
+                on_chunk_done = getattr(self, "_on_chunk_done", None)
                 if len(chunks) == 1:
                     text, transcription_time = self._send_to_groq_mp3(chunks[0])
+                    if on_chunk_done:
+                        on_chunk_done(1, 1)
                 else:
-                    text, transcription_time = self._send_to_groq_chunks(chunks)
+                    text, transcription_time = self._send_to_groq_chunks(chunks, on_chunk_done=on_chunk_done)
 
                 return text, {
                     "engine": "groq-whisper",

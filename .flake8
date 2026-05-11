@@ -1,2 +1,23 @@
 [flake8]
-max-line-length = 140
+max-line-length = 127
+exclude =
+    venv_transcriber,
+    .claude,
+    pytest_cache,
+    ruff_cache,
+    .vscode,
+    .coverage,
+    .kilo,
+    __pycache__,
+    *.pyc,
+    *.egg-info,
+    .git,
+    .tox,
+    .venv,
+    .env,
+    .env.prod,
+    .vscode,
+    logs,
+    outputs,
+    transcripts,
+    audios

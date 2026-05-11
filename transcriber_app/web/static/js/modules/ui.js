@@ -175,7 +175,6 @@ function setStatusText(text) {
  * @param {boolean} hayAudio - Si hay audio cargado
  */
 function updateRecordingButtonsState(hayAudio) {
-    // REGLAS REFINADAS:
     // Con audio: grabar ❌, parar ❌, borrar ✅, descargar ✅, cargar ✅
     // Sin audio: grabar ✅, cargar ✅, parar ❌, borrar ❌, descargar ❌
 
@@ -185,7 +184,7 @@ function updateRecordingButtonsState(hayAudio) {
     }
 
     if (elements.stopBtn) {
-        elements.stopBtn.disabled = true; // El botón parar solo debe estar activo mientras se graba (manejado en startRecording)
+        elements.stopBtn.disabled = true;
     }
 
     if (elements.deleteBtn) {
@@ -197,8 +196,29 @@ function updateRecordingButtonsState(hayAudio) {
     }
 
     if (elements.uploadBtn) {
-        elements.uploadBtn.disabled = false; // Siempre se puede cargar un audio nuevo (sustituye al actual)
+        elements.uploadBtn.disabled = false;
     }
+}
+
+/**
+ * Deshabilita todos los controles de audio/grabación durante una subida activa.
+ * Llamar siempre en par con enableUploadControls().
+ */
+function disableUploadControls() {
+    if (elements.recordBtn) elements.recordBtn.disabled = true;
+    if (elements.stopBtn) elements.stopBtn.disabled = true;
+    if (elements.deleteBtn) elements.deleteBtn.disabled = true;
+    if (elements.downloadBtn) elements.downloadBtn.disabled = true;
+    if (elements.uploadBtn) elements.uploadBtn.disabled = true;
+    if (elements.sendBtn) elements.sendBtn.disabled = true;
+}
+
+/**
+ * Restaura el estado de controles tras finalizar (o cancelar) una subida.
+ * @param {boolean} hayAudio - Si hay audio disponible tras la subida
+ */
+function enableUploadControls(hayAudio) {
+    updateRecordingButtonsState(hayAudio);
 }
 
 /**
@@ -253,7 +273,9 @@ function showPrintButton() {
 export {
     clearTranscriptionAndResults,
     disableRecordingWithTooltip,
+    disableUploadControls,
     enableRecordingAndClearTooltip,
+    enableUploadControls,
     hideOverlay,
     hideCancelButton,
     hideProgressBar,

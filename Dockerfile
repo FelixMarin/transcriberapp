@@ -5,6 +5,9 @@ ENV TZ=Europe/Madrid
 
 WORKDIR /app
 
+# ffmpeg necesario para procesar audios largos localmente
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+
 # Copiamos el código
 COPY . .
 

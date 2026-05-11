@@ -9,7 +9,7 @@ services:
     image: transcriberapp-container
     restart: unless-stopped
     env_file:
-      - .env.prod
+      - .env
     networks:
       - cine-network
 

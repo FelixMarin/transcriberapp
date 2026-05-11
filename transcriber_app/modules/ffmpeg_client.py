@@ -123,7 +123,7 @@ def convert_audio(path: str, fmt: str = "wav") -> bytes:
                 f"{FFMPEG_API}/audio/convert",
                 files={"file": f},
                 data={"format": fmt},
-                timeout=60  # Mayor timeout para conversiones largas
+                timeout=600  # 10 min: suficiente para audios de varias horas
             )
         r.raise_for_status()
 
@@ -147,12 +147,11 @@ def convert_audio(path: str, fmt: str = "wav") -> bytes:
 
 
 def convert_to_mp3_chunked(path: str, max_size_mb: int = 22) -> dict:
-    """Convierte audio a MP3 y lo divide en chunks usando FFmpeg API.
+    """Convierte audio a MP3 y lo divide en chunks.
 
-    Diseñado para audios largos que exceden el límite de 25MB.
-    El servidor espera un JSON con la ruta del audio y devuelve metadata de los chunks.
+    Intenta primero el endpoint remoto del ffmpeg-api. Si no está disponible (404 u otro error),
+    cae en una implementación local que usa ffmpeg instalado en el host.
     """
-    # Verificar salud antes
     is_healthy, error = check_ffmpeg_api_health()
     if not is_healthy:
         raise ConnectionError(f"FFmpeg API no disponible: {error}")
@@ -168,12 +167,16 @@ def convert_to_mp3_chunked(path: str, max_size_mb: int = 22) -> dict:
             json={"path": path, "max_size_mb": max_size_mb},
             timeout=300
         )
-        response.raise_for_status()
 
+        if response.status_code == 404:
+            logger.warning("[FFMPEG] Endpoint /audio/convert-to-mp3-chunked no disponible (404), usando chunking local")
+            return _convert_to_mp3_chunked_local(path, max_size_mb)
+
+        response.raise_for_status()
         result = response.json()
+
         if not isinstance(result, dict):
             raise ValueError("Respuesta inválida de FFmpeg API: se esperaba un objeto JSON")
-
         if result.get("error"):
             raise RuntimeError(f"Error en convert-to-mp3-chunked: {result.get('error')}")
 
@@ -183,12 +186,9 @@ def convert_to_mp3_chunked(path: str, max_size_mb: int = 22) -> dict:
         needs_chunking = result.get("needs_chunking", len(chunks) > 1)
 
         logger.info(
-            "[FFMPEG] MP3 chunked result: "
-            f"total_chunks={total_chunks}, "
-            f"needs_chunking={needs_chunking}, "
-            f"original_mp3={original_mp3}"
+            f"[FFMPEG] MP3 chunked result: total_chunks={total_chunks}, "
+            f"needs_chunking={needs_chunking}, original_mp3={original_mp3}"
         )
-
         return {
             "chunks": chunks,
             "total_chunks": total_chunks,
@@ -197,8 +197,97 @@ def convert_to_mp3_chunked(path: str, max_size_mb: int = 22) -> dict:
         }
 
     except requests.exceptions.RequestException as e:
-        logger.error(f"[FFMPEG] Error en convert-to-mp3-chunked: {e}")
+        logger.error(f"[FFMPEG] Error en convert-to-mp3-chunked remoto: {e}")
         raise
+
+
+def _convert_to_mp3_chunked_local(path: str, max_size_mb: int = 22) -> dict:
+    """Convierte el audio a MP3 y lo trocea usando ffmpeg local.
+
+    Evita pasar el fichero completo por HTTP para no saturar memoria ni depender
+    del endpoint remoto de chunking.
+    """
+    import subprocess
+    import tempfile
+    import math
+    import json as _json
+
+    logger.info(f"[FFMPEG LOCAL] Procesando localmente: {path}")
+
+    max_bytes = max_size_mb * 1024 * 1024
+    chunk_dir = tempfile.mkdtemp(prefix="groq_chunks_")
+    full_mp3 = os.path.join(chunk_dir, "full.mp3")
+
+    # 1. Convertir a MP3 128kbps 44.1kHz mono con ffmpeg local
+    logger.info(f"[FFMPEG LOCAL] Convirtiendo a MP3: {path} -> {full_mp3}")
+    try:
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-i", path,
+                "-vn", "-ar", "44100", "-ac", "1", "-b:a", "128k",
+                full_mp3,
+            ],
+            capture_output=True, timeout=600, check=True
+        )
+    except subprocess.CalledProcessError as e:
+        logger.error(f"[FFMPEG LOCAL] Error convirtiendo a MP3: {e.stderr.decode()[:400]}")
+        raise RuntimeError(f"ffmpeg no pudo convertir el audio a MP3: {e}")
+
+    mp3_size = os.path.getsize(full_mp3)
+    logger.info(f"[FFMPEG LOCAL] MP3 generado: {full_mp3} ({mp3_size} bytes)")
+
+    # 2. Si cabe en un chunk, devolver directamente
+    if mp3_size <= max_bytes:
+        logger.info("[FFMPEG LOCAL] MP3 cabe en un único chunk, no hace falta trocear")
+        return {"chunks": [full_mp3], "total_chunks": 1, "original_mp3": full_mp3, "needs_chunking": False}
+
+    # 3. Obtener duración con ffprobe
+    try:
+        result = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", full_mp3],
+            capture_output=True, text=True, timeout=30, check=True
+        )
+        duration_s = float(_json.loads(result.stdout)["format"]["duration"])
+    except Exception as e:
+        raise RuntimeError(f"No se pudo obtener duración del MP3: {e}")
+
+    # 4. Calcular duración de segmento para que cada chunk quede por debajo de max_size_mb
+    n_chunks = math.ceil(mp3_size / max_bytes)
+    segment_duration = math.ceil(duration_s / n_chunks)
+    logger.info(f"[FFMPEG LOCAL] Trocear en ~{n_chunks} segmentos de {segment_duration}s")
+
+    # 5. Trocear
+    segment_pattern = os.path.join(chunk_dir, "chunk_%03d.mp3")
+    try:
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-i", full_mp3,
+                "-f", "segment",
+                "-segment_time", str(segment_duration),
+                "-c", "copy",
+                "-reset_timestamps", "1",
+                segment_pattern,
+            ],
+            capture_output=True, timeout=600, check=True
+        )
+    except subprocess.CalledProcessError as e:
+        logger.error(f"[FFMPEG LOCAL] Error troceando MP3: {e.stderr.decode()[:400]}")
+        raise RuntimeError(f"ffmpeg falló al trocear el audio: {e}")
+
+    chunk_paths = sorted(
+        [os.path.join(chunk_dir, f) for f in os.listdir(chunk_dir) if f.startswith("chunk_") and f.endswith(".mp3")]
+    )
+
+    logger.info(f"[FFMPEG LOCAL] Chunks generados: {len(chunk_paths)}")
+    for cp in chunk_paths:
+        logger.info(f"[FFMPEG LOCAL]   {cp} ({os.path.getsize(cp)} bytes)")
+
+    return {
+        "chunks": chunk_paths,
+        "total_chunks": len(chunk_paths),
+        "original_mp3": full_mp3,
+        "needs_chunking": True,
+    }
 
 
 def clean_audio(path: str) -> bytes:

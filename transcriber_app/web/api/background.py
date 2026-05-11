@@ -20,8 +20,12 @@ def process_audio_job(job_id: str, nombre: str, modo: str, email: str):
 
     audio_path = None
 
+    def set_status(message: str):
+        JOB_STATUS[job_id] = {"status": "running", "message": message}
+        logger.info(f"[BACKGROUND JOB] {message}")
+
     try:
-        JOB_STATUS[job_id] = {"status": "running"}
+        set_status("Iniciando procesamiento...")
 
         # Buscar el archivo con diferentes extensiones posibles
         audios_dir = Path("audios")
@@ -62,14 +66,23 @@ def process_audio_job(job_id: str, nombre: str, modo: str, email: str):
         file_size = os.path.getsize(audio_path)
         logger.info(f"[BACKGROUND JOB] Tamaño del audio: {file_size} bytes ({file_size / (1024*1024):.2f} MB)")
 
-        # === USAR EL MISMO PIPELINE QUE EL CLI PERO SIN GUARDAR ARCHIVOS ===
+        # === PIPELINE DE PROCESAMIENTO ===
+        set_status("Validando audio...")
+
+        def on_chunk_done(idx, total):
+            set_status(f"Transcribiendo fragmento {idx} de {total}...")
+
+        transcriber = GroqTranscriber()
+        transcriber._on_chunk_done = on_chunk_done  # inyectado, ver más abajo
+
         orchestrator = Orchestrator(
             receiver=AudioReceiver(),
-            transcriber=GroqTranscriber(),
+            transcriber=transcriber,
             formatter=OutputFormatter(),
             save_files=False
         )
 
+        set_status("Convirtiendo y fragmentando audio...")
         output_file, text, summary = orchestrator.run_audio(str(audio_path), modo)
 
         logger.info(f"[BACKGROUND JOB] Procesamiento en memoria completado para {nombre}")

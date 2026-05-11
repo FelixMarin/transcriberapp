@@ -186,7 +186,7 @@ async function uploadAudio(audioBlob, nombre, modo, email) {
         extension = "ogg";
     }
 
-    const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB por chunk
+    const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB por chunk — por debajo del timeout de 100s de Cloudflare
     const totalSize = audioBlob.size;
     const totalChunks = Math.ceil(totalSize / CHUNK_SIZE);
     const uploadId = `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -203,31 +203,54 @@ async function uploadAudio(audioBlob, nombre, modo, email) {
     console.log(`  Upload ID: ${uploadId}`);
     console.log(`  Extensión: .${extension}`);
 
-    setStatusText(`Subiendo audio. Parte: (0/${totalChunks})`);
+    setStatusText(`Subiendo audio (0/${totalChunks} partes)...`);
     showProgressBar();
     setProgressBar(0);
 
+    // Número de subidas simultáneas. Más de 4 no mejora por límites del navegador (6 conex/dominio).
+    const CONCURRENCY = 4;
+    let completed = 0;
+
     try {
-        // Enviar cada chunk
-        for (let i = 0; i < totalChunks; i++) {
+        // Subida paralela con ventana deslizante de CONCURRENCY peticiones simultáneas
+        const indices = Array.from({ length: totalChunks }, (_, i) => i);
+
+        async function uploadOne(i) {
             const start = i * CHUNK_SIZE;
             const end = Math.min(start + CHUNK_SIZE, totalSize);
             const chunk = audioBlob.slice(start, end);
 
-            setStatusText(`Subiendo audio. Parte: (${i + 1}/${totalChunks})`);
+            const MAX_RETRIES = 3;
+            let lastError;
+            for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                try {
+                    const response = await uploadChunk(chunk, i, totalChunks, uploadId, nombre, modo, email, extension, abortController.signal);
 
-            const response = await uploadChunk(chunk, i, totalChunks, uploadId, nombre, modo, email, extension, abortController.signal);
+                    if (response.ok) {
+                        completed++;
+                        setProgressBar((completed / totalChunks) * 100);
+                        setStatusText(`Subiendo audio (${completed}/${totalChunks} partes)...`);
+                        console.log(`[UPLOAD AUDIO] Chunk ${i + 1}/${totalChunks} confirmado`);
+                        return;
+                    }
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `Error en chunk ${i + 1}: ${response.status}`);
+                    const errorData = await response.json().catch(() => ({}));
+                    lastError = new Error(errorData.error || `Error en chunk ${i + 1}: ${response.status}`);
+                    console.warn(`[UPLOAD AUDIO] Chunk ${i + 1} intento ${attempt}/${MAX_RETRIES} fallido (${response.status}), reintentando...`);
+                } catch (err) {
+                    if (err.name === "AbortError") throw err;
+                    lastError = err;
+                    console.warn(`[UPLOAD AUDIO] Chunk ${i + 1} intento ${attempt}/${MAX_RETRIES} error de red, reintentando...`);
+                }
+                if (attempt < MAX_RETRIES) await new Promise(r => setTimeout(r, 1000 * attempt));
             }
+            throw lastError;
+        }
 
-            // Actualizar progreso
-            const progress = ((i + 1) / totalChunks) * 100;
-            setProgressBar(progress);
-
-            console.log(`[UPLOAD AUDIO] Chunk ${i + 1}/${totalChunks} enviado y confirmado`);
+        // Procesar en lotes de CONCURRENCY
+        for (let i = 0; i < indices.length; i += CONCURRENCY) {
+            const batch = indices.slice(i, i + CONCURRENCY).map(uploadOne);
+            await Promise.all(batch);
         }
 
         console.log("[UPLOAD AUDIO] Todos los chunks enviados correctamente");

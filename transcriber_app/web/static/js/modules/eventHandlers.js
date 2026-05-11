@@ -52,7 +52,9 @@ import {
 } from "./recording.js";
 import {
     clearTranscriptionAndResults,
+    enableUploadControls,
     hideCancelButton,
+    hideProgressBar,
     setStatusText,
     showCancelButton,
     updateRecordingButtonsState,
@@ -383,13 +385,11 @@ function setupCancelHandler() {
             if (result.success) {
                 hideProgressBar();
                 hideCancelButton();
-                setStatusText("Subida cancelada. Los chunks han sido eliminados.");
-                // Limpiar estado de audio grabado
-                // (No hay blob válido aún, pero reseteamos el formulario si queremos)
+                setStatusText("Subida cancelada.");
+                enableUploadControls(!!getLastRecordingBlob());
             } else {
                 alert(result.error);
                 setStatusText("Error al cancelar: " + result.error);
-                // Rehabilitar botón si falló la cancelación
                 elements.cancelUploadBtn.disabled = false;
             }
         };

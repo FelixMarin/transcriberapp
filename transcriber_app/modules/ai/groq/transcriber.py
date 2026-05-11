@@ -54,8 +54,8 @@ class GroqTranscriber(TranscriberInterface):
 
         # Verificar GPU status (solo informativo)
         gpu_available, gpu_info = check_gpu_status()
-        if gpu_available:
-            logger.info(f"[GROQ] GPU disponible para procesamiento: {gpu_info.get('gpu_name')}")
+        if gpu_available and gpu_info is not None:
+            logger.info(f"[GROQ] GPU disponible para procesamiento: {gpu_info.get('gpu_name', 'desconocida')}")
         else:
             logger.info("[GROQ] GPU no disponible, usando CPU para procesamiento")
 
@@ -237,6 +237,7 @@ class GroqTranscriber(TranscriberInterface):
         base_wait = 30  # segundos; Groq suele pedir ~30s de espera en 429
 
         start = time.time()
+        resp = None
         for attempt in range(1, max_retries + 1):
             with open(file_path, "rb") as f:
                 logger.info(f"[GROQ] Enviando a Groq API (intento {attempt}/{max_retries})...")
@@ -270,6 +271,9 @@ class GroqTranscriber(TranscriberInterface):
                 resp.raise_for_status()
 
             break  # éxito
+
+        if resp is None:
+            raise RuntimeError("No se obtuvo respuesta de la API de Groq tras los reintentos")
 
         elapsed = time.time() - start
         text = resp.json().get("text", "").strip()
